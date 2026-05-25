@@ -65,7 +65,10 @@ export default function DashboardPage() {
   publicWall: true,        
   allowVoice: true,        
   autoDelete: false,       
-  socialLinks: { twitter: '', instagram: '', youtube: '', website: '' }
+  socialLinks: {
+    twitter: '', instagram: '', youtube: '', website: '',
+    github: ''
+  }
 })
   const [stats, setStats] = useState({
     total: 0, 
@@ -222,6 +225,7 @@ export default function DashboardPage() {
             instagram: profileData.instagram || '',
             youtube: profileData.youtube || '',
             website: profileData.website || '',
+            github: ''
           }
         })
         
