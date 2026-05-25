@@ -113,7 +113,7 @@ export default function HomePage() {
     { icon: BarChart3, title: 'Analytics', desc: 'Track engagement and understand your audience.', badge: 'Insights', color: 'text-orange-500' },
   ]
 
-  const stats = [
+  const statsData = [
     { value: '10K+', label: 'Active Users', trend: '+25%' },
     { value: '1M+', label: 'Messages Sent', trend: '+45%' },
     { value: '99.9%', label: 'Uptime', trend: '30-day' },
@@ -158,10 +158,10 @@ export default function HomePage() {
       <section ref={targetRef} className="relative pt-32 pb-20 px-4 overflow-hidden">
         <motion.div style={{ opacity }} className="max-w-6xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }} className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 ${darkMode ? 'bg-white/5 border border-white/10' : 'bg-gray-100 border border-gray-200'}`}>
+            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 ${darkMode ? 'bg-white/5 border border-white/10' : 'bg-gray-100 border border-gray-200'}`}>
               <Sparkles size={16} className="text-blue-500" />
               <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Voice Messages Now Available</span>
-            </motion.div>
+            </div>
             <h1 className={`text-5xl md:text-7xl font-bold mb-6 ${themeClasses.text}`}>
               Speak <span className={darkMode ? 'bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent' : 'text-blue-600'}>Freely</span><br />
               Stay <span className={themeClasses.text}>Anonymous</span>
@@ -174,7 +174,7 @@ export default function HomePage() {
               <Button variant="secondary" darkMode={darkMode} size="lg"><Play size={18} /> Watch Demo</Button>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
-              {stats.map((stat, i) => (
+              {statsData.map((stat, i) => (
                 <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="text-center">
                   <div className={`text-3xl font-bold ${themeClasses.text}`}>{stat.value}</div>
                   <div className={`text-sm ${themeClasses.textSec}`}>{stat.label}</div>
@@ -242,7 +242,11 @@ export default function HomePage() {
               <div className="flex justify-center gap-1 mt-4">{[...Array(5)].map((_, i) => <Star key={i} size={16} className="fill-yellow-500 text-yellow-500" />)}</div>
             </motion.div>
           </AnimatePresence>
-          <div className="flex justify-center gap-2 mt-6">{testimonials.map((_, i) => (<button key={i} onClick={() => setActiveTestimonial(i)} className={`w-2 h-2 rounded-full transition-all ${activeTestimonial === i ? 'w-6 bg-blue-500' : 'bg-gray-600'}`} />))}</div>
+          <div className="flex justify-center gap-2 mt-6">
+            {testimonials.map((_, i) => (
+              <button key={i} onClick={() => setActiveTestimonial(i)} className={`w-2 h-2 rounded-full transition-all ${activeTestimonial === i ? 'w-6 bg-blue-500' : 'bg-gray-600'}`} />
+            ))}
+          </div>
         </div>
       </section>
 
@@ -256,7 +260,9 @@ export default function HomePage() {
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email" className={`flex-1 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 ${themeClasses.input}`} required />
               <Button darkMode={darkMode} type="submit">Get Started <ArrowRight size={18} /></Button>
             </form>
-          ) : (<div className="text-green-500 flex items-center justify-center gap-2"><Check size={20} /> Thanks! Check your email.</div>)}
+          ) : (
+            <div className="text-green-500 flex items-center justify-center gap-2"><Check size={20} /> Thanks! Check your email.</div>
+          )}
         </div>
       </section>
 
