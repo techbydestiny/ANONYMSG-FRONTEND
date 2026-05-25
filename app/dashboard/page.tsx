@@ -1,7 +1,7 @@
 // app/dashboard/page.tsx
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTheme } from '@/app/context/ThemeContext'
 import Link from 'next/link'
@@ -15,6 +15,9 @@ import { DashboardInbox } from './components/DashboardInbox'
 import { DashboardAnalytics } from './components/DashboardAnalytics'
 import { DashboardSettings } from './components/DashboardSettings'
 
+// Import API client
+import { profileAPI, messagesAPI, authAPI, API_BASE_URL } from '@/lib/api'
+
 // Types
 interface Message {
   id: number
@@ -22,8 +25,6 @@ interface Message {
   created_at: string
   is_read: boolean
 }
-
-
 
 interface SettingsForm {
   username: string
@@ -38,9 +39,9 @@ interface SettingsForm {
   socialLinks: {
     twitter: string
     instagram: string
-    github: string
     youtube: string
     website: string
+    github: string
   }
 }
 
@@ -55,21 +56,20 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'inbox' | 'analytics' | 'settings'>('inbox')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
- const [settings, setSettings] = useState<SettingsForm>({
-  username: '',
-  email: '',
-  bio: '',
-  teamColor: '#3B82F6',
-  profilePicture: null,
-  bannerImage: null,
-  publicWall: true,        
-  allowVoice: true,        
-  autoDelete: false,       
-  socialLinks: {
-    twitter: '', instagram: '', youtube: '', website: '',
-    github: ''
-  }
-})
+  const [settings, setSettings] = useState<SettingsForm>({
+    username: '',
+    email: '',
+    bio: '',
+    teamColor: '#3B82F6',
+    profilePicture: null,
+    bannerImage: null,
+    publicWall: true,
+    allowVoice: true,
+    autoDelete: false,
+    socialLinks: {
+      twitter: '', instagram: '', youtube: '', website: '', github: ''
+    }
+  })
   const [stats, setStats] = useState({
     total: 0, 
     unread: 0, 
@@ -86,7 +86,7 @@ export default function DashboardPage() {
     
     try {
       const token = localStorage.getItem('access_token')
-      const response = await fetch('http://localhost:8000/api/profile/', {
+      const response = await fetch(`${API_BASE_URL}/profile/`, {
         method: 'PATCH',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData,
@@ -113,7 +113,7 @@ export default function DashboardPage() {
   const handleImageRemove = async (type: 'profile' | 'banner') => {
     try {
       const token = localStorage.getItem('access_token')
-      const response = await fetch('http://localhost:8000/api/profile/', {
+      const response = await fetch(`${API_BASE_URL}/profile/`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -144,7 +144,7 @@ export default function DashboardPage() {
       const token = localStorage.getItem('access_token')
       
       // Update user account (username and email)
-      const userResponse = await fetch('http://localhost:8000/api/auth/me/', {
+      const userResponse = await fetch(`${API_BASE_URL}/auth/me/`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -162,7 +162,7 @@ export default function DashboardPage() {
       }
       
       // Update profile settings (bio, color, social links)
-      const profileResponse = await fetch('http://localhost:8000/api/profile/', {
+      const profileResponse = await fetch(`${API_BASE_URL}/profile/`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -192,24 +192,20 @@ export default function DashboardPage() {
     }
   }
 
+  // Fetch user data
   useEffect(() => {
-    const token = localStorage.getItem('access_token')
-    if (!token) {
-      router.push('/login')
-      return
-    }
-    
     const fetchData = async () => {
+      const token = localStorage.getItem('access_token')
+      if (!token) {
+        router.push('/login')
+        return
+      }
+      
       try {
-        const token = localStorage.getItem('access_token')
-        
-        // Fetch profile
-        const profileRes = await fetch('http://localhost:8000/api/profile/', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
+        // Fetch profile using API client
+        const profileRes = await profileAPI.getProfile()
         const profileData = await profileRes.json()
         
-      // In fetchData function, update setSettings:
         setSettings({
           username: profileData.username || '',
           email: profileData.email || '',
@@ -217,69 +213,67 @@ export default function DashboardPage() {
           teamColor: profileData.team_color || '#3B82F6',
           profilePicture: profileData.profile_picture || null,
           bannerImage: profileData.banner_image || null,
-          publicWall: profileData.public_wall !== undefined ? profileData.public_wall : true,  // Add this
-          allowVoice: profileData.allow_voice !== undefined ? profileData.allow_voice : true,  // Add this
-          autoDelete: profileData.auto_delete !== undefined ? profileData.auto_delete : false, // Add this
+          publicWall: profileData.public_wall !== undefined ? profileData.public_wall : true,
+          allowVoice: profileData.allow_voice !== undefined ? profileData.allow_voice : true,
+          autoDelete: profileData.auto_delete !== undefined ? profileData.auto_delete : false,
           socialLinks: {
             twitter: profileData.twitter || '',
             instagram: profileData.instagram || '',
             youtube: profileData.youtube || '',
             website: profileData.website || '',
-            github: ''
+            github: profileData.github || ''
           }
         })
         
-        // Fetch messages
-        const messagesRes = await fetch('http://localhost:8000/api/messages/inbox/', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
+        // Fetch messages using API client
+        const messagesRes = await messagesAPI.getInbox()
         const messagesData = await messagesRes.json()
         const fetchedMessages = messagesData.results || []
         setMessages(fetchedMessages)
-              
-      // Calculate stats
-      const total = fetchedMessages.length
-      const unread = fetchedMessages.filter((m: Message) => !m.is_read).length
-
-      // Calculate This Week (last 7 days)
-      const oneWeekAgo = new Date()
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
-      const thisWeek = fetchedMessages.filter((m: Message) => new Date(m.created_at) >= oneWeekAgo).length
-
-      // Calculate Streak (consecutive days with messages)
-      const dates: string[] = fetchedMessages.map((m: Message) => new Date(m.created_at).toDateString())
-      const uniqueDates: string[] = [...new Set(dates)].sort()
-      let streak = 0
-      let currentStreak = 0
-      let lastDate: Date | null = null
-
-      for (const dateStr of uniqueDates) {
-        const currentDate = new Date(dateStr)
-        if (lastDate) {
-          const diffDays = Math.floor((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24))
-          if (diffDays === 1) {
-            currentStreak++
-          } else if (diffDays > 1) {
+        
+        // Calculate stats
+        const total = fetchedMessages.length
+        const unread = fetchedMessages.filter((m: Message) => !m.is_read).length
+        
+        // Calculate This Week (last 7 days)
+        const oneWeekAgo = new Date()
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+        const thisWeek = fetchedMessages.filter((m: Message) => new Date(m.created_at) >= oneWeekAgo).length
+        
+        // Calculate Streak
+        const dates: string[] = fetchedMessages.map((m: Message) => new Date(m.created_at).toDateString())
+        const uniqueDates: string[] = [...new Set(dates)].sort()
+        let streak = 0
+        let currentStreak = 0
+        let lastDate: Date | null = null
+        
+        for (const dateStr of uniqueDates) {
+          const currentDate = new Date(dateStr)
+          if (lastDate) {
+            const diffDays = Math.floor((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24))
+            if (diffDays === 1) {
+              currentStreak++
+            } else if (diffDays > 1) {
+              currentStreak = 1
+            }
+          } else {
             currentStreak = 1
           }
-        } else {
-          currentStreak = 1
+          streak = Math.max(streak, currentStreak)
+          lastDate = currentDate
         }
-        streak = Math.max(streak, currentStreak)
-        lastDate = currentDate
-      }
-
-      // Calculate response rate (read messages / total)
-      const read = fetchedMessages.filter((m: Message) => m.is_read).length
-      const responseRate = total > 0 ? Math.round((read / total) * 100) : 0
-
-      setStats({
-        total,
-        unread,
-        thisWeek,
-        streak,
-        responseRate
-      })
+        
+        // Calculate response rate
+        const read = fetchedMessages.filter((m: Message) => m.is_read).length
+        const responseRate = total > 0 ? Math.round((read / total) * 100) : 0
+        
+        setStats({
+          total,
+          unread,
+          thisWeek,
+          streak,
+          responseRate
+        })
         
       } catch (error) {
         console.error('Failed to fetch:', error)
@@ -303,41 +297,35 @@ export default function DashboardPage() {
   }
 
   const deleteMessage = async (id: number) => {
-    const token = localStorage.getItem('access_token')
-    await fetch(`http://localhost:8000/api/messages/${id}/delete/`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    setMessages(messages.filter(m => m.id !== id))
-    setStats(prev => ({
-      ...prev,
-      total: prev.total - 1,
-      unread: messages.find(m => m.id === id && !m.is_read) ? prev.unread - 1 : prev.unread
-    }))
+    const response = await messagesAPI.deleteMessage(id)
+    if (response.ok) {
+      setMessages(messages.filter(m => m.id !== id))
+      setStats(prev => ({
+        ...prev,
+        total: prev.total - 1,
+        unread: messages.find(m => m.id === id && !m.is_read) ? prev.unread - 1 : prev.unread
+      }))
+    }
   }
 
   const archiveMessage = async (id: number) => {
-    const token = localStorage.getItem('access_token')
-    await fetch(`http://localhost:8000/api/messages/${id}/archive/`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    setMessages(messages.filter(m => m.id !== id))
-    setStats(prev => ({
-      ...prev,
-      total: prev.total - 1,
-      unread: messages.find(m => m.id === id && !m.is_read) ? prev.unread - 1 : prev.unread
-    }))
+    const response = await messagesAPI.archiveMessage(id)
+    if (response.ok) {
+      setMessages(messages.filter(m => m.id !== id))
+      setStats(prev => ({
+        ...prev,
+        total: prev.total - 1,
+        unread: messages.find(m => m.id === id && !m.is_read) ? prev.unread - 1 : prev.unread
+      }))
+    }
   }
 
   const markAsRead = async (id: number) => {
-    const token = localStorage.getItem('access_token')
-    await fetch(`http://localhost:8000/api/messages/${id}/read/`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    setMessages(messages.map(m => m.id === id ? { ...m, is_read: true } : m))
-    setStats(prev => ({ ...prev, unread: prev.unread - 1 }))
+    const response = await messagesAPI.markAsRead(id)
+    if (response.ok) {
+      setMessages(messages.map(m => m.id === id ? { ...m, is_read: true } : m))
+      setStats(prev => ({ ...prev, unread: prev.unread - 1 }))
+    }
   }
 
   const markAllAsRead = async () => {
@@ -424,9 +412,7 @@ export default function DashboardPage() {
         ${themeClasses.sidebar} border-r ${themeClasses.border}
       `}>
         <div className="p-6">
-          {/* Sidebar User Info - With Profile Picture */}
           <div className="flex items-center gap-3 mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
-            {/* Profile Picture */}
             {settings.profilePicture ? (
               <img 
                 src={settings.profilePicture} 
@@ -472,9 +458,7 @@ export default function DashboardPage() {
       {/* Desktop Sidebar */}
       <div className={`hidden lg:block fixed left-0 top-16 bottom-0 w-64 ${themeClasses.sidebar} border-r ${themeClasses.border} overflow-y-auto`}>
         <div className="p-6">
-          {/* Sidebar User Info - With Profile Picture */}
           <div className="flex items-center gap-3 mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
-            {/* Profile Picture */}
             {settings.profilePicture ? (
               <img 
                 src={settings.profilePicture} 

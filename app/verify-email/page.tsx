@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import { API_BASE_URL } from '@/lib/api'
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams()
@@ -24,7 +25,7 @@ export default function VerifyEmailPage() {
 
     const verifyEmail = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/auth/verify-email/', {
+        const response = await fetch(`${API_BASE_URL}/auth/verify-email/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token, email })
@@ -51,6 +52,11 @@ export default function VerifyEmailPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black">
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-600/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl animate-pulse-slow" />
+      </div>
+
       <div className="bg-white/5 border border-white/10 rounded-2xl p-8 max-w-md w-full text-center">
         {status === 'loading' && (
           <>
@@ -66,7 +72,7 @@ export default function VerifyEmailPage() {
             <h2 className="text-xl font-semibold text-white mb-2">Email Verified!</h2>
             <p className="text-gray-400 mb-6">{message}</p>
             <Link href="/login">
-              <button className="px-6 py-2 bg-blue-600 rounded-lg text-white">
+              <button className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-white transition">
                 Go to Login
               </button>
             </Link>
@@ -78,11 +84,18 @@ export default function VerifyEmailPage() {
             <XCircle size={48} className="text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-white mb-2">Verification Failed</h2>
             <p className="text-gray-400 mb-6">{message}</p>
-            <Link href="/login">
-              <button className="px-6 py-2 bg-blue-600 rounded-lg text-white">
-                Back to Login
-              </button>
-            </Link>
+            <div className="space-y-3">
+              <Link href="/login">
+                <button className="w-full px-6 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-white transition">
+                  Back to Login
+                </button>
+              </Link>
+              <Link href="/forgot-password">
+                <button className="w-full px-6 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl text-white transition">
+                  Forgot Password?
+                </button>
+              </Link>
+            </div>
           </>
         )}
       </div>

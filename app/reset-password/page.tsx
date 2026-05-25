@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Lock, Eye, EyeOff, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { API_BASE_URL } from '@/lib/api'
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams()
@@ -59,7 +60,7 @@ export default function ResetPasswordPage() {
     setError('')
 
     try {
-      const response = await fetch('http://localhost:8000/api/auth/reset-password/', {
+      const response = await fetch(`${API_BASE_URL}/auth/reset-password/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

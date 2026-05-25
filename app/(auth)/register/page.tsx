@@ -8,36 +8,7 @@ import { User, Mail, Lock, Eye, EyeOff, ArrowRight, Check } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useTheme } from '@/app/context/ThemeContext'
 import { authAPI } from '@/lib/api'
-
-const Button = ({ children, variant = 'primary', size = 'md', className = '', onClick, fullWidth, disabled, loading, ...props }: any) => {
-  const baseStyles = "font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 rounded-xl"
-  
-  const variants: any = {
-    primary: "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white shadow-lg shadow-blue-500/25",
-    secondary: "backdrop-blur-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white",
-  }
-  
-  const sizes: any = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2 text-base",
-    lg: "px-6 py-3 text-lg"
-  }
-  
-  return (
-    <button
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
-      onClick={onClick}
-      disabled={disabled || loading}
-      {...props}
-    >
-      {loading ? (
-        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-      ) : (
-        children
-      )}
-    </button>
-  )
-}
+import { Button } from '@/components/ui/Button'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -102,37 +73,37 @@ export default function RegisterPage() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  if (!validateForm()) return
-  
-  setIsLoading(true)
-  
-  try {
-    const response = await authAPI.register({
-      username: formData.username,
-      email: formData.email,
-      password: formData.password,
-      password2: formData.confirmPassword  // Make sure this is included
-    })
+    e.preventDefault()
+    if (!validateForm()) return
     
-    const data = await response.json()
+    setIsLoading(true)
     
-    if (response.ok) {
-      setSuccess(true)
-      setTimeout(() => {
-        router.push('/login')
-      }, 3000)
-    } else {
-      if (data.username) setErrors(prev => ({ ...prev, username: data.username[0] }))
-      if (data.email) setErrors(prev => ({ ...prev, email: data.email[0] }))
-      if (data.password) setErrors(prev => ({ ...prev, password: data.password[0] }))
+    try {
+      const response = await authAPI.register({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        password2: formData.confirmPassword
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok) {
+        setSuccess(true)
+        setTimeout(() => {
+          router.push('/login')
+        }, 3000)
+      } else {
+        if (data.username) setErrors(prev => ({ ...prev, username: data.username[0] }))
+        if (data.email) setErrors(prev => ({ ...prev, email: data.email[0] }))
+        if (data.password) setErrors(prev => ({ ...prev, password: data.password[0] }))
+      }
+    } catch (err) {
+      setErrors(prev => ({ ...prev, general: 'Network error. Please try again.' }))
+    } finally {
+      setIsLoading(false)
     }
-  } catch (err) {
-    setErrors(prev => ({ ...prev, general: 'Network error. Please try again.' }))
-  } finally {
-    setIsLoading(false)
   }
-}
 
   // Show loading spinner while checking auth
   if (checkingAuth) {
@@ -313,7 +284,7 @@ export default function RegisterPage() {
               <p className="text-xs text-red-500">{errors.agreeTerms}</p>
             )}
 
-            <Button type="submit" fullWidth loading={isLoading}>
+            <Button type="submit" fullWidth loading={isLoading} variant="primary">
               Create Account
               <ArrowRight size={16} />
             </Button>

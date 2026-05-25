@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useTheme } from '@/app/context/ThemeContext'
-import { authAPI } from '@/lib/api'
+import { authAPI, API_BASE_URL } from '@/lib/api'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -77,7 +77,7 @@ export default function LoginPage() {
     setError('')
     
     try {
-      const response = await fetch('http://localhost:8000/api/auth/resend-verification/', {
+      const response = await fetch(`${API_BASE_URL}/auth/resend-verification/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: verificationEmail })

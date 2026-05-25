@@ -9,6 +9,7 @@ import {
   MessageSquare, Clock, User, ArrowLeft, FolderOpen
 } from 'lucide-react'
 import Link from 'next/link'
+import { API_BASE_URL, messagesAPI } from '@/lib/api'
 
 interface ArchivedMessage {
   id: number
@@ -35,7 +36,8 @@ export default function ArchivePage() {
     // Fetch archived messages from API
     const fetchArchivedMessages = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/messages/archived/', {
+        const token = localStorage.getItem('access_token')
+        const response = await fetch(`${API_BASE_URL}/messages/archived/`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
         const data = await response.json()
@@ -53,7 +55,7 @@ export default function ArchivePage() {
   const handleRestore = async (id: number) => {
     try {
       const token = localStorage.getItem('access_token')
-      const response = await fetch(`http://localhost:8000/api/messages/${id}/restore/`, {
+      const response = await fetch(`${API_BASE_URL}/messages/${id}/restore/`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -71,7 +73,7 @@ export default function ArchivePage() {
     if (confirm('Are you sure you want to permanently delete this message? This cannot be undone.')) {
       try {
         const token = localStorage.getItem('access_token')
-        const response = await fetch(`http://localhost:8000/api/messages/${id}/permanent-delete/`, {
+        const response = await fetch(`${API_BASE_URL}/messages/${id}/permanent-delete/`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${token}` }
         })

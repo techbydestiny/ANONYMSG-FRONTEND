@@ -7,6 +7,7 @@ import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import { Navbar } from '@/components/ui/Navbar'
 import { useTheme } from '@/app/context/ThemeContext'
 
+
 // Icons
 import { 
   Shield, Zap, Heart, Users, Lock, MessageSquare, 
