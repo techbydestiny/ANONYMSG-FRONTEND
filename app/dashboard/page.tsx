@@ -23,6 +23,8 @@ interface Message {
   is_read: boolean
 }
 
+
+
 interface SettingsForm {
   username: string
   email: string
@@ -30,9 +32,13 @@ interface SettingsForm {
   teamColor: string
   profilePicture: string | null
   bannerImage: string | null
+  publicWall: boolean
+  allowVoice: boolean
+  autoDelete: boolean
   socialLinks: {
     twitter: string
     instagram: string
+    github: string
     youtube: string
     website: string
   }
@@ -49,15 +55,18 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'inbox' | 'analytics' | 'settings'>('inbox')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
-  const [settings, setSettings] = useState<SettingsForm>({
-    username: '',
-    email: '',
-    bio: '',
-    teamColor: '#3B82F6',
-    profilePicture: null,
-    bannerImage: null,
-    socialLinks: { twitter: '', instagram: '', youtube: '', website: '' }
-  })
+ const [settings, setSettings] = useState<SettingsForm>({
+  username: '',
+  email: '',
+  bio: '',
+  teamColor: '#3B82F6',
+  profilePicture: null,
+  bannerImage: null,
+  publicWall: true,        
+  allowVoice: true,        
+  autoDelete: false,       
+  socialLinks: { twitter: '', instagram: '', youtube: '', website: '' }
+})
   const [stats, setStats] = useState({
     total: 0, 
     unread: 0, 
@@ -197,6 +206,7 @@ export default function DashboardPage() {
         })
         const profileData = await profileRes.json()
         
+      // In fetchData function, update setSettings:
         setSettings({
           username: profileData.username || '',
           email: profileData.email || '',
@@ -204,6 +214,9 @@ export default function DashboardPage() {
           teamColor: profileData.team_color || '#3B82F6',
           profilePicture: profileData.profile_picture || null,
           bannerImage: profileData.banner_image || null,
+          publicWall: profileData.public_wall !== undefined ? profileData.public_wall : true,  // Add this
+          allowVoice: profileData.allow_voice !== undefined ? profileData.allow_voice : true,  // Add this
+          autoDelete: profileData.auto_delete !== undefined ? profileData.auto_delete : false, // Add this
           socialLinks: {
             twitter: profileData.twitter || '',
             instagram: profileData.instagram || '',
