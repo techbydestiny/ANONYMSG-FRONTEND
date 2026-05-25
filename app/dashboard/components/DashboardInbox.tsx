@@ -194,7 +194,6 @@ export function DashboardInbox({
         backgroundColor: '#ffffff',
         pixelRatio: 2,
         quality: 1,
-        logging: false,
         cacheBust: true,
       })
       setShareImage(dataUrl)
