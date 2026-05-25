@@ -19,6 +19,7 @@ interface DashboardInboxProps {
   onDelete: (id: number) => void
   onArchive: (id: number) => void
   onExport: () => void
+  onShareImage: (message: Message) => void  
   onShareLink: () => void
   onReport: (message: Message) => void
   username?: string

@@ -43,6 +43,10 @@ interface DashboardSettingsProps {
   isUploading?: 'profile' | 'banner' | null
   selectedColor: string
   setSelectedColor: (color: string) => void
+  profilePreview?: string | null
+  setProfilePreview?: (preview: string | null) => void
+  bannerPreview?: string | null
+  setBannerPreview?: (preview: string | null) => void
 }
 
 const socialFields: { id: keyof SocialLinks; label: string; icon: any; placeholder: string }[] = [
