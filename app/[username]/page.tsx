@@ -11,8 +11,8 @@ import { useTheme } from '@/app/context/ThemeContext'
 import { 
   Send, Shield, Lock, User, Calendar, MessageSquare,
   Check, AlertCircle, Copy, Eye, Heart, Users, Star,
-  Twitter, Instagram, Youtube, Github, Globe, Link as LinkIcon,
-  MapPin, Mail, Sparkles, AlertTriangle
+  Globe, Link as LinkIcon, MapPin, Mail, Sparkles, AlertTriangle,
+  X, Menu, ArrowLeft, Home, LogOut, Settings, Bell, Inbox
 } from 'lucide-react'
 
 // React Icons for Social Media
