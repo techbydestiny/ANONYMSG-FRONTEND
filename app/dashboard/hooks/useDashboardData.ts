@@ -4,13 +4,13 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { messagesAPI, profileAPI } from '@/lib/api'
-import { Message, SettingsForm, DashboardStats } from '../types'
+import { Message, SettingsForm, Stats } from '../types'
 
 export function useDashboardData() {
   const router = useRouter()
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
-  const [stats, setStats] = useState<DashboardStats>({
+  const [stats, setStats] = useState<Stats>({
     total: 0,
     unread: 0,
     thisWeek: 0,
