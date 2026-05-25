@@ -219,50 +219,50 @@ export default function DashboardPage() {
         const messagesData = await messagesRes.json()
         const fetchedMessages = messagesData.results || []
         setMessages(fetchedMessages)
-        
-        // Calculate stats
-        const total = fetchedMessages.length
-        const unread = fetchedMessages.filter((m: Message) => !m.is_read).length
-        
-        // Calculate This Week (last 7 days)
-        const oneWeekAgo = new Date()
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
-        const thisWeek = fetchedMessages.filter((m: Message) => new Date(m.created_at) >= oneWeekAgo).length
-        
-        // Calculate Streak (consecutive days with messages)
-        const dates = fetchedMessages.map((m: Message) => new Date(m.created_at).toDateString())
-        const uniqueDates = [...new Set(dates)].sort()
-        let streak = 0
-        let currentStreak = 0
-        let lastDate: Date | null = null
-        
-        for (const dateStr of uniqueDates) {
-          const currentDate = new Date(dateStr)
-          if (lastDate) {
-            const diffDays = Math.floor((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24))
-            if (diffDays === 1) {
-              currentStreak++
-            } else if (diffDays > 1) {
-              currentStreak = 1
-            }
-          } else {
+              
+      // Calculate stats
+      const total = fetchedMessages.length
+      const unread = fetchedMessages.filter((m: Message) => !m.is_read).length
+
+      // Calculate This Week (last 7 days)
+      const oneWeekAgo = new Date()
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+      const thisWeek = fetchedMessages.filter((m: Message) => new Date(m.created_at) >= oneWeekAgo).length
+
+      // Calculate Streak (consecutive days with messages)
+      const dates: string[] = fetchedMessages.map((m: Message) => new Date(m.created_at).toDateString())
+      const uniqueDates: string[] = [...new Set(dates)].sort()
+      let streak = 0
+      let currentStreak = 0
+      let lastDate: Date | null = null
+
+      for (const dateStr of uniqueDates) {
+        const currentDate = new Date(dateStr)
+        if (lastDate) {
+          const diffDays = Math.floor((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24))
+          if (diffDays === 1) {
+            currentStreak++
+          } else if (diffDays > 1) {
             currentStreak = 1
           }
-          streak = Math.max(streak, currentStreak)
-          lastDate = currentDate
+        } else {
+          currentStreak = 1
         }
-        
-        // Calculate response rate (read messages / total)
-        const read = fetchedMessages.filter((m: Message) => m.is_read).length
-        const responseRate = total > 0 ? Math.round((read / total) * 100) : 0
-        
-        setStats({
-          total,
-          unread,
-          thisWeek,
-          streak,
-          responseRate
-        })
+        streak = Math.max(streak, currentStreak)
+        lastDate = currentDate
+      }
+
+      // Calculate response rate (read messages / total)
+      const read = fetchedMessages.filter((m: Message) => m.is_read).length
+      const responseRate = total > 0 ? Math.round((read / total) * 100) : 0
+
+      setStats({
+        total,
+        unread,
+        thisWeek,
+        streak,
+        responseRate
+      })
         
       } catch (error) {
         console.error('Failed to fetch:', error)
