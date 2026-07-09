@@ -95,18 +95,20 @@ export function useDashboardData() {
     fetchData()
   }, [router])
 
+  // FIX: Convert number ID to string when calling API
   const deleteMessage = async (id: number) => {
     try {
-      await messagesAPI.deleteMessage(id)
+      await messagesAPI.deleteMessage(String(id))
       setMessages(messages.filter((m) => m.id !== id))
     } catch (error) {
       console.error('Failed to delete message:', error)
     }
   }
 
+  // FIX: Convert number ID to string when calling API
   const markAsRead = async (id: number) => {
     try {
-      await messagesAPI.markAsRead(id)
+      await messagesAPI.markAsRead(String(id))
       setMessages(messages.map((m) => (m.id === id ? { ...m, is_read: true } : m)))
     } catch (error) {
       console.error('Failed to mark as read:', error)
@@ -116,7 +118,8 @@ export function useDashboardData() {
   const markAllAsRead = async () => {
     const unreadMessages = messages.filter(m => !m.is_read)
     for (const message of unreadMessages) {
-      await messagesAPI.markAsRead(message.id)
+      // FIX: Convert number ID to string when calling API
+      await messagesAPI.markAsRead(String(message.id))
     }
     setMessages(messages.map((m) => ({ ...m, is_read: true })))
   }
