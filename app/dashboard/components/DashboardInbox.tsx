@@ -8,7 +8,7 @@ import {
   Archive, AlertCircle, X, Check, Link as LinkIcon,
   Sparkles, MoreHorizontal, ChevronDown, Circle,
   Mic, Play, Pause, Image as ImageIcon,
-  Pin, PinOff, Send,Copy,
+  Pin, PinOff, Send, Copy,
 } from 'lucide-react'
 import { Message, Stats } from '../types'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -161,7 +161,8 @@ export function DashboardInbox({
       ctx.textAlign = 'left'
       ctx.textBaseline = 'top'
       
-      if (message.message_type === 'image' && message.media_url) {
+      // FIX: Use message.type instead of message.message_type
+      if (message.type === 'image' && message.media_url) {
         try {
           const img = new Image()
           img.crossOrigin = 'anonymous'
@@ -214,59 +215,8 @@ export function DashboardInbox({
           ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
           ctx.fillText('📷 Image not available', width / 2, msgY + 80)
         }
-      } else if (message.message_type === 'gif' && message.media_url) {
-        try {
-          const img = new Image()
-          img.crossOrigin = 'anonymous'
-          const imageUrl = getFullImageUrl(message.media_url)
-          
-          await new Promise((resolve, reject) => {
-            img.onload = resolve
-            img.onerror = reject
-            img.src = imageUrl
-          })
-          
-          const maxSize = 150
-          let imgWidth = img.width
-          let imgHeight = img.height
-          
-          if (imgWidth > maxSize) {
-            const ratio = maxSize / imgWidth
-            imgWidth = maxSize
-            imgHeight = imgHeight * ratio
-          }
-          if (imgHeight > maxSize) {
-            const ratio = maxSize / imgHeight
-            imgHeight = maxSize
-            imgWidth = imgWidth * ratio
-          }
-          
-          const imgX = (width - imgWidth) / 2
-          const imgY = msgY + 20
-          
-          ctx.save()
-          roundRect(ctx, imgX - 5, imgY - 5, imgWidth + 10, imgHeight + 10, 12)
-          ctx.clip()
-          ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight)
-          ctx.restore()
-          
-          ctx.fillStyle = '#64748B'
-          ctx.textAlign = 'center'
-          ctx.textBaseline = 'top'
-          ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
-          ctx.fillText('GIF', width / 2, imgY + imgHeight + 12)
-          
-        } catch (error) {
-          ctx.fillStyle = '#E2E8F0'
-          roundRect(ctx, 40, msgY + 20, width - 80, 120, 12)
-          ctx.fill()
-          ctx.fillStyle = '#94A3B8'
-          ctx.textAlign = 'center'
-          ctx.textBaseline = 'middle'
-          ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
-          ctx.fillText('🎬 GIF not available', width / 2, msgY + 80)
-        }
-      } else if (message.message_type === 'voice') {
+      } else if (message.type === 'voice' && message.media_url) {
+        // Voice message rendering
         ctx.fillStyle = '#3b82f6'
         ctx.beginPath()
         ctx.arc(55, msgY + 45, 20, 0, Math.PI * 2)
@@ -292,7 +242,8 @@ export function DashboardInbox({
         ctx.textAlign = 'left'
         ctx.textBaseline = 'middle'
         ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
-        ctx.fillText(`${message.media_duration || 30}s`, 295, msgY + 44)
+        const duration = (message as any).media_duration || 30
+        ctx.fillText(`${duration}s`, 295, msgY + 44)
         
         ctx.fillStyle = '#94A3B8'
         ctx.textAlign = 'center'
@@ -300,6 +251,7 @@ export function DashboardInbox({
         ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
         ctx.fillText('Voice Message', width / 2, msgY + 70)
       } else {
+        // Text message
         const text = message.content || 'No message content'
         const maxWidth = width - 80
         const lineHeight = 25
@@ -839,7 +791,8 @@ export function DashboardInbox({
                     <div className="flex items-start gap-2 mb-1">
                       <MessageSquare size={14} className={`${!message.is_read ? 'text-blue-500' : 'text-gray-400'} mt-0.5 shrink-0`} />
                       
-                      {message.message_type === 'voice' && message.media_url && (
+                      {/* FIX: Use message.type instead of message.message_type */}
+                      {message.type === 'voice' && message.media_url && (
                         <div className="flex items-center gap-3 flex-1">
                           <button 
                             onClick={() => playVoiceMessage(message.id)}
@@ -850,7 +803,7 @@ export function DashboardInbox({
                           <div className="flex-1 h-1 bg-blue-500/20 rounded-full overflow-hidden">
                             <div className="h-full bg-blue-500 rounded-full" style={{ width: playingVoice === message.id ? '65%' : '45%' }} />
                           </div>
-                          <span className="text-xs text-gray-500">{message.media_duration || 30}s</span>
+                          <span className="text-xs text-gray-500">{(message as any).media_duration || 30}s</span>
                           <audio 
                             ref={(el) => {
                               if (el) {
@@ -864,7 +817,8 @@ export function DashboardInbox({
                         </div>
                       )}
                       
-                      {message.message_type === 'image' && message.media_url && (
+                      {/* FIX: Use message.type instead of message.message_type */}
+                      {message.type === 'image' && message.media_url && (
                         <div className="relative group">
                           <img 
                             src={getFullImageUrl(message.media_url)} 
@@ -897,33 +851,8 @@ export function DashboardInbox({
                         </div>
                       )}
                       
-                      {message.message_type === 'gif' && message.media_url && (
-                        <img 
-                          src={getFullImageUrl(message.media_url)} 
-                          alt="GIF" 
-                          className="rounded-xl max-h-[100px] object-cover"
-                          loading="lazy"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none'
-                            const parent = e.currentTarget.parentElement
-                            if (parent) {
-                              const fallback = document.createElement('div')
-                              fallback.className = 'flex items-center gap-2 p-4 bg-gray-100 dark:bg-gray-800 rounded-xl text-gray-500 text-sm'
-                              fallback.innerHTML = `
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                                  <circle cx="8.5" cy="8.5" r="1.5"/>
-                                  <polyline points="21 15 16 10 5 21"/>
-                                </svg>
-                                <span>GIF not available</span>
-                              `
-                              parent.appendChild(fallback)
-                            }
-                          }}
-                        />
-                      )}
-                      
-                      {message.message_type === 'text' && (
+                      {/* FIX: Use message.type instead of message.message_type */}
+                      {message.type === 'text' && (
                         <p className={`${!message.is_read ? themeClasses.text : themeClasses.textSecondary} text-sm leading-relaxed break-words`}>
                           {message.content || ''}
                         </p>
@@ -944,9 +873,10 @@ export function DashboardInbox({
                         <User size={12} />
                         Anonymous
                       </span>
-                      {message.message_type !== 'text' && (
+                      {/* FIX: Use message.type instead of message.message_type */}
+                      {message.type && message.type !== 'text' && (
                         <span className="px-2 py-0.5 bg-purple-500/20 text-purple-500 rounded-full text-[10px] font-medium">
-                          {message.message_type}
+                          {message.type}
                         </span>
                       )}
                       {!message.is_read && (

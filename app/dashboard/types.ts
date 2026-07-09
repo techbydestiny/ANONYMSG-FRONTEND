@@ -4,6 +4,7 @@ export interface Message {
   content: string
   created_at: string
   is_read: boolean
+  is_pinned?: boolean
   is_archived?: boolean
   is_archiving_soon?: boolean
   days_until_archive?: number
