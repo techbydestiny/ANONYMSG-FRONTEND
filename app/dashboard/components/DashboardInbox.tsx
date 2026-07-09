@@ -79,7 +79,8 @@ export function DashboardInbox({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const getFullImageUrl = (url: string) => {
+  // FIX: Handle undefined URL
+  const getFullImageUrl = (url: string | undefined) => {
     if (!url) return ''
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url
@@ -359,14 +360,12 @@ export function DashboardInbox({
     return m.content?.toLowerCase().includes(searchQuery.toLowerCase()) || false
   })
 
-  // FIX: toggleSelectMessage accepts string
   const toggleSelectMessage = (id: string) => {
     setSelectedMessages(prev => 
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     )
   }
 
-  // FIX: Convert number IDs to strings
   const selectAll = () => {
     if (selectedMessages.length === filteredMessages.length) {
       setSelectedMessages([])
@@ -821,7 +820,10 @@ export function DashboardInbox({
                             alt="Shared image" 
                             className="rounded-xl max-h-[120px] object-cover cursor-pointer"
                             onClick={() => {
-                              window.open(getFullImageUrl(message.media_url), '_blank')
+                              // FIX: Check if media_url exists before opening
+                              if (message.media_url) {
+                                window.open(getFullImageUrl(message.media_url), '_blank')
+                              }
                             }}
                             onError={(e) => {
                               e.currentTarget.style.display = 'none'
