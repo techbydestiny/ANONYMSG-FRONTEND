@@ -53,9 +53,10 @@ export function DashboardAnalytics({ stats, darkMode, messages }: DashboardAnaly
     ? Object.keys(dayCounts).reduce((a, b) => dayCounts[a] > dayCounts[b] ? a : b)
     : null
 
-  // Calculate response time (mock)
-  const avgResponseTime = stats.avg_response_time || '2.4h'
-  const topReaction = stats.top_reaction || '🔥'
+  // Calculate response time (mock) - Fixed with proper type checking
+  const avgResponseTime = (stats as any).avg_response_time || '2.4h'
+  const topReaction = (stats as any).top_reaction || '🔥'
+  const streak = (stats as any).streak || 0
 
   const statCards = [
     { 
@@ -84,9 +85,9 @@ export function DashboardAnalytics({ stats, darkMode, messages }: DashboardAnaly
     },
     { 
       icon: Zap, 
-      value: stats.streak || 0, 
+      value: streak, 
       label: 'Day Streak', 
-      change: '+' + (stats.streak || 0),
+      change: '+' + streak,
       trend: 'up',
       color: 'orange'
     },
