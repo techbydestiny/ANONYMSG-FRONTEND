@@ -13,8 +13,7 @@ import {
   Send, Shield, Lock, User, Calendar, MessageSquare,
   Check, AlertCircle, Copy, Eye, Heart, Users, Star,
   Globe, Link as LinkIcon, MapPin, Mail, Sparkles, AlertTriangle,
-  X, Menu, ArrowLeft, Home, LogOut, Settings, Bell, Inbox,
-  Twitter, Instagram, Youtube, Github, Share2, Zap, Clock,
+  X, Menu, ArrowLeft, Home, LogOut, Settings, Bell, Inbox, Share2, Zap, Clock,
   Mic, Image as ImageIcon, Smile, Paperclip, Loader2, Trash2,
   Play, Pause, Volume2, VolumeX
 } from 'lucide-react'
