@@ -43,6 +43,7 @@ export function MessageTemplates({ darkMode, onSelect, onClose }: MessageTemplat
     textSecondary: darkMode ? 'text-gray-400' : 'text-gray-500',
     card: darkMode ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200/50',
     button: darkMode ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200',
+    input: darkMode ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-200 text-gray-900', // ADD THIS
   }
 
   return (
@@ -52,7 +53,10 @@ export function MessageTemplates({ darkMode, onSelect, onClose }: MessageTemplat
           <Sparkles size={18} className="text-blue-500" />
           <h3 className={`font-medium ${themeClasses.text}`}>Message Templates</h3>
         </div>
-        <button onClick={onClose} className={`p-1 rounded-lg ${themeClasses.input}`}>
+        <button 
+          onClick={onClose} 
+          className={`p-1 rounded-lg ${themeClasses.input} transition hover:scale-110`}
+        >
           <X size={18} />
         </button>
       </div>
