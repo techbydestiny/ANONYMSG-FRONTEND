@@ -8,12 +8,27 @@ import { useTheme } from '@/app/context/ThemeContext'
 import { Navbar } from '@/components/Navbar'
 import { 
   Sparkles, Mail, MessageSquare, Send, Check, MapPin, 
-  Phone, Clock, Globe, Twitter, Instagram, Github,
-  ArrowRight, MoveRight, Play
+  Phone, Clock, Globe,
+  MoveRight
 } from 'lucide-react'
 
-const Button = ({ children, variant = 'primary', size = 'md', className = '', onClick, href, darkMode = false, type = 'button' }: any) => {
+import {FaTwitter as Twitter, FaInstagram as Instagram, FaGithub as Github,} from 'react-icons/fa'
+
+const Button = ({ 
+  children, 
+  variant = 'primary', 
+  size = 'md', 
+  className = '', 
+  onClick, 
+  href, 
+  darkMode = false, 
+  type = 'button',
+  fullWidth = false,
+  disabled = false
+}: any) => {
   const baseStyles = "font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95 inline-flex items-center justify-center gap-2 rounded-xl"
+  const widthStyles = fullWidth ? "w-full" : ""
+  const disabledStyles = disabled ? "opacity-50 cursor-not-allowed hover:scale-100" : ""
   
   const variants: any = {
     primary: "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg shadow-blue-500/25",
@@ -28,17 +43,29 @@ const Button = ({ children, variant = 'primary', size = 'md', className = '', on
     lg: "px-8 py-4 text-lg"
   }
   
-  const Component = href ? Link : 'button'
+  // If href is provided, render as Link
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${widthStyles} ${className}`}
+        onClick={onClick}
+      >
+        {children}
+      </Link>
+    )
+  }
   
+  // Otherwise render as button
   return (
-    <Component
-      href={href || '#'}
+    <button
       type={type}
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+      disabled={disabled}
+      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${widthStyles} ${disabledStyles} ${className}`}
       onClick={onClick}
     >
       {children}
-    </Component>
+    </button>
   )
 }
 
@@ -220,7 +247,13 @@ export default function ContactPage() {
                       placeholder="Write your message here..."
                     />
                   </div>
-                  <Button type="submit" darkMode={darkMode} size="lg" fullWidth disabled={isLoading}>
+                  <Button 
+                    type="submit" 
+                    darkMode={darkMode} 
+                    size="lg" 
+                    fullWidth={true} 
+                    disabled={isLoading}
+                  >
                     {isLoading ? 'Sending...' : 'Send Message'}
                     {!isLoading && <Send size={18} />}
                   </Button>
