@@ -161,7 +161,6 @@ export function DashboardInbox({
       ctx.textAlign = 'left'
       ctx.textBaseline = 'top'
       
-      // FIX: Use message.type instead of message.message_type
       if (message.type === 'image' && message.media_url) {
         try {
           const img = new Image()
@@ -216,7 +215,6 @@ export function DashboardInbox({
           ctx.fillText('📷 Image not available', width / 2, msgY + 80)
         }
       } else if (message.type === 'voice' && message.media_url) {
-        // Voice message rendering
         ctx.fillStyle = '#3b82f6'
         ctx.beginPath()
         ctx.arc(55, msgY + 45, 20, 0, Math.PI * 2)
@@ -251,7 +249,6 @@ export function DashboardInbox({
         ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
         ctx.fillText('Voice Message', width / 2, msgY + 70)
       } else {
-        // Text message
         const text = message.content || 'No message content'
         const maxWidth = width - 80
         const lineHeight = 25
@@ -319,7 +316,6 @@ export function DashboardInbox({
     }
   }
 
-  // Social share functions
   const openSocialShare = (message: Message) => {
     setShareMessage(message)
     const url = `${window.location.origin}/share/${message.id}`
@@ -363,17 +359,19 @@ export function DashboardInbox({
     return m.content?.toLowerCase().includes(searchQuery.toLowerCase()) || false
   })
 
+  // FIX: toggleSelectMessage accepts string
   const toggleSelectMessage = (id: string) => {
     setSelectedMessages(prev => 
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     )
   }
 
+  // FIX: Convert number IDs to strings
   const selectAll = () => {
     if (selectedMessages.length === filteredMessages.length) {
       setSelectedMessages([])
     } else {
-      setSelectedMessages(filteredMessages.map(m => m.id))
+      setSelectedMessages(filteredMessages.map(m => String(m.id)))
     }
   }
 
@@ -775,8 +773,8 @@ export function DashboardInbox({
                   {selectMode && (
                     <input 
                       type="checkbox" 
-                      checked={selectedMessages.includes(message.id)} 
-                      onChange={() => toggleSelectMessage(message.id)} 
+                      checked={selectedMessages.includes(String(message.id))} 
+                      onChange={() => toggleSelectMessage(String(message.id))} 
                       className="mt-1 w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500" 
                     />
                   )}
@@ -791,23 +789,22 @@ export function DashboardInbox({
                     <div className="flex items-start gap-2 mb-1">
                       <MessageSquare size={14} className={`${!message.is_read ? 'text-blue-500' : 'text-gray-400'} mt-0.5 shrink-0`} />
                       
-                      {/* FIX: Use message.type instead of message.message_type */}
                       {message.type === 'voice' && message.media_url && (
                         <div className="flex items-center gap-3 flex-1">
                           <button 
-                            onClick={() => playVoiceMessage(message.id)}
+                            onClick={() => playVoiceMessage(String(message.id))}
                             className="p-1.5 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition"
                           >
-                            {playingVoice === message.id ? <Pause size={14} /> : <Play size={14} />}
+                            {playingVoice === String(message.id) ? <Pause size={14} /> : <Play size={14} />}
                           </button>
                           <div className="flex-1 h-1 bg-blue-500/20 rounded-full overflow-hidden">
-                            <div className="h-full bg-blue-500 rounded-full" style={{ width: playingVoice === message.id ? '65%' : '45%' }} />
+                            <div className="h-full bg-blue-500 rounded-full" style={{ width: playingVoice === String(message.id) ? '65%' : '45%' }} />
                           </div>
                           <span className="text-xs text-gray-500">{(message as any).media_duration || 30}s</span>
                           <audio 
                             ref={(el) => {
                               if (el) {
-                                setAudioElements(prev => ({ ...prev, [message.id]: el }))
+                                setAudioElements(prev => ({ ...prev, [String(message.id)]: el }))
                               }
                             }}
                             src={message.media_url}
@@ -817,7 +814,6 @@ export function DashboardInbox({
                         </div>
                       )}
                       
-                      {/* FIX: Use message.type instead of message.message_type */}
                       {message.type === 'image' && message.media_url && (
                         <div className="relative group">
                           <img 
@@ -851,7 +847,6 @@ export function DashboardInbox({
                         </div>
                       )}
                       
-                      {/* FIX: Use message.type instead of message.message_type */}
                       {message.type === 'text' && (
                         <p className={`${!message.is_read ? themeClasses.text : themeClasses.textSecondary} text-sm leading-relaxed break-words`}>
                           {message.content || ''}
@@ -873,7 +868,6 @@ export function DashboardInbox({
                         <User size={12} />
                         Anonymous
                       </span>
-                      {/* FIX: Use message.type instead of message.message_type */}
                       {message.type && message.type !== 'text' && (
                         <span className="px-2 py-0.5 bg-purple-500/20 text-purple-500 rounded-full text-[10px] font-medium">
                           {message.type}
@@ -893,7 +887,7 @@ export function DashboardInbox({
                   <div className="flex gap-1 shrink-0">
                     {!message.is_read && (
                       <button 
-                        onClick={() => onMarkAsRead(message.id)} 
+                        onClick={() => onMarkAsRead(String(message.id))} 
                         className={`p-1.5 rounded-xl transition ${themeClasses.hover}`}
                         title="Mark as read"
                       >
@@ -902,7 +896,7 @@ export function DashboardInbox({
                     )}
                     {onPinMessage && (
                       <button 
-                        onClick={() => onPinMessage(message.id)} 
+                        onClick={() => onPinMessage(String(message.id))} 
                         className={`p-1.5 rounded-xl transition ${themeClasses.hover}`}
                         title={message.is_pinned ? 'Unpin' : 'Pin'}
                       >
@@ -936,14 +930,14 @@ export function DashboardInbox({
                       <Flag size={14} className="text-gray-500" />
                     </button>
                     <button 
-                      onClick={() => onArchive(message.id)} 
+                      onClick={() => onArchive(String(message.id))} 
                       className={`p-1.5 rounded-xl transition ${themeClasses.hover}`}
                       title="Archive"
                     >
                       <Archive size={14} className="text-gray-500" />
                     </button>
                     <button 
-                      onClick={() => onDelete(message.id)} 
+                      onClick={() => onDelete(String(message.id))} 
                       className={`p-1.5 rounded-xl transition hover:bg-red-500/10`}
                       title="Delete"
                     >
