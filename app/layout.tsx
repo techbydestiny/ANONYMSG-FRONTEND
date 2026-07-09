@@ -2,14 +2,14 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { Navbar } from '@/components/ui/Navbar'
-import { ThemeProvider } from '@/app/context/ThemeContext'
+import { ThemeProvider } from './context/ThemeContext'
+import { Navbar } from '@/components/Navbar'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'AnonMsg - Anonymous Messaging Platform',
-  description: 'Receive honest, anonymous messages from anyone.',
+  description: 'Send and receive anonymous messages, create polls, and host Q&A sessions',
 }
 
 export default function RootLayout({
@@ -18,13 +18,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" data-scroll-behavior="smooth">
+    <html lang="en">
       <body className={inter.className}>
         <ThemeProvider>
           <Navbar />
-          <main className="pt-16">
-            {children}
-          </main>
+          {children}
         </ThemeProvider>
       </body>
     </html>

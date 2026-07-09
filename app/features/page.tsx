@@ -4,13 +4,14 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useTheme } from '@/app/context/ThemeContext'
-import { Navbar } from '@/components/ui/Navbar'
+import { Navbar } from '@/components/Navbar'
 import { 
   Shield, Zap, Heart, Lock, MessageSquare, Mic, Image, 
   BarChart3, Palette, Globe, Users, Award, Clock, 
   Download, Share2, Archive, Bell, Eye, Star, 
   TrendingUp, Smile, Gift, Crown, Rocket, Target,
   Sparkles, CheckCircle, ArrowRight, Play, AlertCircle, Link as LinkIcon,
+  MoveRight, Check, Sparkle
 } from 'lucide-react'
 
 // Button Component
@@ -18,10 +19,11 @@ const Button = ({ children, variant = 'primary', size = 'md', className = '', on
   const baseStyles = "font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95 inline-flex items-center justify-center gap-2 rounded-xl"
   
   const variants: any = {
-    primary: "bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25",
+    primary: "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg shadow-blue-500/25",
     secondary: darkMode 
-      ? "bg-white/10 hover:bg-white/20 text-white border border-white/20"
+      ? "bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm"
       : "bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-200",
+    outline: "border-2 border-blue-500 text-blue-500 hover:bg-blue-500/10",
   }
   
   const sizes: any = {
@@ -48,25 +50,28 @@ const FeatureCard = ({ icon: Icon, title, description, badge, color, index, dark
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     whileInView={{ opacity: 1, y: 0 }}
-    transition={{ delay: index * 0.1 }}
+    transition={{ delay: index * 0.05 }}
+    whileHover={{ y: -4 }}
     className={`group relative p-6 rounded-2xl transition-all duration-300 ${
-      darkMode ? 'bg-gray-900/50 border border-gray-800 hover:border-blue-500/30' : 'bg-white border border-gray-200 shadow-sm hover:shadow-md'
+      darkMode ? 'bg-white/5 border border-white/10 hover:border-blue-500/30 hover:shadow-xl' : 'bg-white border border-gray-200/60 shadow-sm hover:shadow-xl hover:border-blue-500/50'
     }`}
   >
     {badge && (
-      <span className="absolute top-4 right-4 text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-500">
+      <span className={`absolute top-4 right-4 text-xs px-2.5 py-1 rounded-full ${
+        darkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+      }`}>
         {badge}
       </span>
     )}
-    <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${
-      darkMode ? 'bg-blue-500/20' : 'bg-blue-50'
-    } group-hover:scale-110 transition-transform duration-300`}>
+    <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110 ${
+      darkMode ? 'bg-blue-500/10' : 'bg-blue-50'
+    }`}>
       <Icon className={`w-6 h-6 ${color || 'text-blue-500'}`} />
     </div>
-    <h3 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+    <h3 className={`text-lg font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
       {title}
     </h3>
-    <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} leading-relaxed`}>
+    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} leading-relaxed`}>
       {description}
     </p>
   </motion.div>
@@ -74,21 +79,25 @@ const FeatureCard = ({ icon: Icon, title, description, badge, color, index, dark
 
 // Category Section Component
 const CategorySection = ({ title, description, features, icon: Icon, darkMode }: any) => (
-  <div className="mb-16">
-    <div className="flex items-center gap-3 mb-6">
-      <div className={`p-2 rounded-xl ${darkMode ? 'bg-blue-500/20' : 'bg-blue-50'}`}>
-        <Icon className="w-6 h-6 text-blue-500" />
+  <div className="mb-20">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      className="flex items-center gap-3 mb-6"
+    >
+      <div className={`p-2.5 rounded-xl ${darkMode ? 'bg-blue-500/10' : 'bg-blue-50'}`}>
+        <Icon className="w-5 h-5 text-blue-500" />
       </div>
       <div>
         <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
           {title}
         </h2>
-        <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
           {description}
         </p>
       </div>
-    </div>
-    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    </motion.div>
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
       {features.map((feature: any, index: number) => (
         <FeatureCard key={index} {...feature} index={index} darkMode={darkMode} />
       ))}
@@ -98,15 +107,21 @@ const CategorySection = ({ title, description, features, icon: Icon, darkMode }:
 
 // Footer Component
 const Footer = ({ darkMode }: { darkMode: boolean }) => (
-  <footer className={`border-t py-12 px-4 ${darkMode ? 'border-white/10 bg-black' : 'border-gray-200 bg-white'}`}>
+  <footer className={`border-t py-16 px-4 transition-colors duration-300 ${darkMode ? 'border-white/5 bg-black' : 'border-gray-200/50 bg-white/50 backdrop-blur-sm'}`}>
     <div className="max-w-7xl mx-auto">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
-        <div>
+        <div className="col-span-2 md:col-span-1">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg" />
-            <span className={`font-bold text-xl ${darkMode ? 'text-white' : 'text-gray-900'}`}>AnonMsg</span>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
+              <Sparkles size={18} className="text-white" />
+            </div>
+            <span className={`font-bold text-xl ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              Anon<span className="text-blue-500">Q</span>
+            </span>
           </div>
-          <p className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Speak freely. Stay anonymous.</p>
+          <p className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+            Ask Questions. Stay Anonymous.
+          </p>
         </div>
         <div>
           <h4 className={`font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Product</h4>
@@ -130,8 +145,8 @@ const Footer = ({ darkMode }: { darkMode: boolean }) => (
           </ul>
         </div>
       </div>
-      <div className={`text-center text-sm pt-8 border-t ${darkMode ? 'text-gray-600 border-white/10' : 'text-gray-400 border-gray-200'}`}>
-        © 2024 AnonMsg. All rights reserved.
+      <div className={`text-center text-sm pt-8 border-t ${darkMode ? 'text-gray-600 border-white/5' : 'text-gray-400 border-gray-200/50'}`}>
+        © 2024 AnonQ. All rights reserved.
       </div>
     </div>
   </footer>
@@ -220,7 +235,7 @@ export default function FeaturesPage() {
     {
       icon: Archive,
       title: 'Message Archive',
-      description: 'Auto-archive messages after 10 days. Never lose important conversations.',
+      description: 'Auto-archive messages. Never lose important conversations.',
       badge: 'Organized',
       color: 'text-teal-500'
     },
@@ -303,9 +318,9 @@ export default function FeaturesPage() {
   ]
 
   const themeClasses = {
-    bg: darkMode ? 'bg-black' : 'bg-white',
+    bg: darkMode ? 'bg-black' : 'bg-gray-50',
     text: darkMode ? 'text-white' : 'text-gray-900',
-    textSec: darkMode ? 'text-gray-400' : 'text-gray-500',
+    textSec: darkMode ? 'text-gray-400' : 'text-gray-600',
   }
 
   return (
@@ -313,31 +328,34 @@ export default function FeaturesPage() {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="pt-32 pb-16 px-4">
-        <div className="max-w-6xl mx-auto text-center">
+      <section className="pt-32 pb-20 px-4 relative overflow-hidden">
+        <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full blur-3xl ${darkMode ? 'bg-blue-600/20' : 'bg-blue-400/10'}`} />
+        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full blur-3xl ${darkMode ? 'bg-purple-600/10' : 'bg-purple-300/10'}" />
+        
+        <div className="max-w-6xl mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 bg-blue-500/10 border border-blue-500/20">
+            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 ${darkMode ? 'bg-white/5 border border-white/10' : 'bg-blue-50 border border-blue-100'}`}>
               <Sparkles size={16} className="text-blue-500" />
               <span className={`text-sm ${themeClasses.textSec}`}>Powerful Features</span>
             </div>
             <h1 className={`text-5xl md:text-6xl font-bold mb-6 ${themeClasses.text}`}>
               Everything You Need for{' '}
-              <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
                 Anonymous Communication
               </span>
             </h1>
-            <p className={`text-xl ${themeClasses.textSec} max-w-3xl mx-auto mb-8`}>
+            <p className={`text-xl ${themeClasses.textSec} max-w-3xl mx-auto mb-8 leading-relaxed`}>
               From text messages to voice notes, from basic privacy to advanced analytics — 
-              AnonMsg provides all the tools you need to connect anonymously.
+              AnonQ provides all the tools you need to connect anonymously.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/register">
                 <Button darkMode={darkMode} size="lg">
-                  Start Free <ArrowRight size={18} />
+                  Start Free <MoveRight size={18} />
                 </Button>
               </Link>
               <Button variant="secondary" darkMode={darkMode} size="lg">
@@ -349,7 +367,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* Core Features */}
-      <section className="py-16 px-4">
+      <section className="py-8 px-4">
         <div className="max-w-7xl mx-auto">
           <CategorySection
             title="Core Features"
@@ -362,7 +380,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* Media Features */}
-      <section className={`py-16 px-4 ${darkMode ? 'bg-gray-950/50' : 'bg-gray-50'}`}>
+      <section className={`py-8 px-4 ${darkMode ? 'bg-white/5' : 'bg-gray-50/80'}`}>
         <div className="max-w-7xl mx-auto">
           <CategorySection
             title="Rich Media"
@@ -375,7 +393,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* Productivity Features */}
-      <section className="py-16 px-4">
+      <section className="py-8 px-4">
         <div className="max-w-7xl mx-auto">
           <CategorySection
             title="Productivity & Analytics"
@@ -388,7 +406,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* Customization Features */}
-      <section className={`py-16 px-4 ${darkMode ? 'bg-gray-950/50' : 'bg-gray-50'}`}>
+      <section className={`py-8 px-4 ${darkMode ? 'bg-white/5' : 'bg-gray-50/80'}`}>
         <div className="max-w-7xl mx-auto">
           <CategorySection
             title="Customization"
@@ -401,7 +419,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* Security Features */}
-      <section className="py-16 px-4">
+      <section className="py-8 px-4">
         <div className="max-w-7xl mx-auto">
           <CategorySection
             title="Security & Privacy"
@@ -414,97 +432,142 @@ export default function FeaturesPage() {
       </section>
 
       {/* Comparison Table */}
-      <section className={`py-20 px-4 ${darkMode ? 'bg-gray-950/50' : 'bg-gray-50'}`}>
+      <section className={`py-20 px-4 ${darkMode ? 'bg-white/5' : 'bg-gray-50/80'}`}>
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${themeClasses.text}`}>
-              Compare <span className="gradient-text">Plans</span>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-center mb-12"
+          >
+            <span className={`text-sm font-medium text-blue-500 uppercase tracking-wider`}>Pricing</span>
+            <h2 className={`text-4xl md:text-5xl font-bold ${themeClasses.text} mb-4 mt-2`}>
+              Choose Your <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">Plan</span>
             </h2>
-            <p className={`text-xl ${themeClasses.textSec}`}>
-              Choose the plan that works best for you
+            <p className={`text-xl ${themeClasses.textSec} max-w-2xl mx-auto`}>
+              Pick the plan that works best for you
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-6">
             {/* Free Plan */}
-            <div className={`rounded-2xl p-6 ${darkMode ? 'bg-gray-900/50 border border-gray-800' : 'bg-white border border-gray-200 shadow-sm'}`}>
-              <h3 className="text-2xl font-bold mb-2">Free</h3>
-              <div className="text-4xl font-bold mb-6">$0<span className="text-lg font-normal">/month</span></div>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className={`rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1 ${
+                darkMode ? 'bg-white/5 border border-white/10 hover:border-blue-500/30' : 'bg-white border border-gray-200/60 shadow-sm hover:shadow-xl'
+              }`}
+            >
+              <h3 className={`text-xl font-bold ${themeClasses.text}`}>Free</h3>
+              <div className={`text-4xl font-bold mt-2 mb-6 ${themeClasses.text}`}>
+                $0<span className={`text-lg font-normal ${themeClasses.textSec}`}>/month</span>
+              </div>
               <ul className="space-y-3 mb-8">
-                <li className="flex items-center gap-2"><CheckCircle size={18} className="text-green-500" /> 50 messages/month</li>
-                <li className="flex items-center gap-2"><CheckCircle size={18} className="text-green-500" /> Basic analytics</li>
-                <li className="flex items-center gap-2"><CheckCircle size={18} className="text-green-500" /> Text messages only</li>
-                <li className="flex items-center gap-2"><CheckCircle size={18} className="text-green-500" /> Standard support</li>
+                <li className="flex items-center gap-2 text-sm"><Check size={18} className="text-green-500 shrink-0" /> 50 messages/month</li>
+                <li className="flex items-center gap-2 text-sm"><Check size={18} className="text-green-500 shrink-0" /> Basic analytics</li>
+                <li className="flex items-center gap-2 text-sm"><Check size={18} className="text-green-500 shrink-0" /> Text messages only</li>
+                <li className="flex items-center gap-2 text-sm"><Check size={18} className="text-green-500 shrink-0" /> Standard support</li>
               </ul>
               <Link href="/register">
-                <button className="w-full py-2 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 transition">
+                <button className={`w-full py-2.5 px-4 rounded-xl font-medium transition ${
+                  darkMode ? 'border border-white/20 hover:bg-white/10 text-white' : 'border border-gray-300 hover:bg-gray-50 text-gray-900'
+                }`}>
                   Get Started
                 </button>
               </Link>
-            </div>
+            </motion.div>
 
             {/* Pro Plan */}
-            <div className={`rounded-2xl p-6 relative border-2 border-blue-500 shadow-xl ${
-              darkMode ? 'bg-gray-900' : 'bg-white'
-            }`}>
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-4 py-1 rounded-full text-sm">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className={`rounded-2xl p-8 relative transition-all duration-300 hover:-translate-y-1 border-2 border-blue-500 shadow-lg shadow-blue-500/10 ${
+                darkMode ? 'bg-white/10' : 'bg-white'
+              }`}
+            >
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-1 rounded-full text-xs font-medium">
                 Most Popular
               </div>
-              <h3 className="text-2xl font-bold mb-2">Pro</h3>
-              <div className="text-4xl font-bold mb-6">$3<span className="text-lg font-normal">/month</span></div>
+              <h3 className={`text-xl font-bold ${themeClasses.text}`}>Pro</h3>
+              <div className={`text-4xl font-bold mt-2 mb-6 ${themeClasses.text}`}>
+                $3<span className={`text-lg font-normal ${themeClasses.textSec}`}>/month</span>
+              </div>
               <ul className="space-y-3 mb-8">
-                <li className="flex items-center gap-2"><CheckCircle size={18} className="text-green-500" /> Unlimited messages</li>
-                <li className="flex items-center gap-2"><CheckCircle size={18} className="text-green-500" /> Voice messages</li>
-                <li className="flex items-center gap-2"><CheckCircle size={18} className="text-green-500" /> Custom themes</li>
-                <li className="flex items-center gap-2"><CheckCircle size={18} className="text-green-500" /> Advanced analytics</li>
-                <li className="flex items-center gap-2"><CheckCircle size={18} className="text-green-500" /> Priority support</li>
-                <li className="flex items-center gap-2"><CheckCircle size={18} className="text-green-500" /> No ads</li>
+                <li className="flex items-center gap-2 text-sm"><Check size={18} className="text-green-500 shrink-0" /> Unlimited messages</li>
+                <li className="flex items-center gap-2 text-sm"><Check size={18} className="text-green-500 shrink-0" /> Voice messages</li>
+                <li className="flex items-center gap-2 text-sm"><Check size={18} className="text-green-500 shrink-0" /> Custom themes</li>
+                <li className="flex items-center gap-2 text-sm"><Check size={18} className="text-green-500 shrink-0" /> Advanced analytics</li>
+                <li className="flex items-center gap-2 text-sm"><Check size={18} className="text-green-500 shrink-0" /> Priority support</li>
+                <li className="flex items-center gap-2 text-sm"><Check size={18} className="text-green-500 shrink-0" /> No ads</li>
               </ul>
               <Link href="/register">
-                <button className="w-full py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition">
+                <button className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium transition shadow-lg shadow-blue-500/25">
                   Upgrade to Pro
                 </button>
               </Link>
-            </div>
+            </motion.div>
 
             {/* Business Plan */}
-            <div className={`rounded-2xl p-6 ${darkMode ? 'bg-gray-900/50 border border-gray-800' : 'bg-white border border-gray-200 shadow-sm'}`}>
-              <h3 className="text-2xl font-bold mb-2">Business</h3>
-              <div className="text-4xl font-bold mb-6">$8<span className="text-lg font-normal">/month</span></div>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className={`rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1 ${
+                darkMode ? 'bg-white/5 border border-white/10 hover:border-blue-500/30' : 'bg-white border border-gray-200/60 shadow-sm hover:shadow-xl'
+              }`}
+            >
+              <h3 className={`text-xl font-bold ${themeClasses.text}`}>Business</h3>
+              <div className={`text-4xl font-bold mt-2 mb-6 ${themeClasses.text}`}>
+                $8<span className={`text-lg font-normal ${themeClasses.textSec}`}>/month</span>
+              </div>
               <ul className="space-y-3 mb-8">
-                <li className="flex items-center gap-2"><CheckCircle size={18} className="text-green-500" /> Everything in Pro</li>
-                <li className="flex items-center gap-2"><CheckCircle size={18} className="text-green-500" /> API access</li>
-                <li className="flex items-center gap-2"><CheckCircle size={18} className="text-green-500" /> Team accounts</li>
-                <li className="flex items-center gap-2"><CheckCircle size={18} className="text-green-500" /> Custom branding</li>
-                <li className="flex items-center gap-2"><CheckCircle size={18} className="text-green-500" /> Dedicated support</li>
+                <li className="flex items-center gap-2 text-sm"><Check size={18} className="text-green-500 shrink-0" /> Everything in Pro</li>
+                <li className="flex items-center gap-2 text-sm"><Check size={18} className="text-green-500 shrink-0" /> API access</li>
+                <li className="flex items-center gap-2 text-sm"><Check size={18} className="text-green-500 shrink-0" /> Team accounts</li>
+                <li className="flex items-center gap-2 text-sm"><Check size={18} className="text-green-500 shrink-0" /> Custom branding</li>
+                <li className="flex items-center gap-2 text-sm"><Check size={18} className="text-green-500 shrink-0" /> Dedicated support</li>
               </ul>
               <Link href="/contact">
-                <button className="w-full py-2 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 transition">
+                <button className={`w-full py-2.5 px-4 rounded-xl font-medium transition ${
+                  darkMode ? 'border border-white/20 hover:bg-white/10 text-white' : 'border border-gray-300 hover:bg-gray-50 text-gray-900'
+                }`}>
                   Contact Sales
                 </button>
               </Link>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
       <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className={`rounded-2xl p-12 ${darkMode ? 'bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-white/10' : 'bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100'}`}>
-            <h2 className={`text-3xl font-bold mb-4 ${themeClasses.text}`}>
-              Ready to Get Started?
-            </h2>
-            <p className={`${themeClasses.textSec} mb-8 max-w-2xl mx-auto`}>
-              Join thousands of users who are already using AnonMsg to receive honest, anonymous feedback.
-            </p>
-            <Link href="/register">
-              <Button darkMode={darkMode} size="lg">
-                Create Free Account <ArrowRight size={18} />
-              </Button>
-            </Link>
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          className="max-w-4xl mx-auto text-center"
+        >
+          <div className={`rounded-3xl p-12 relative overflow-hidden ${
+            darkMode ? 'bg-gradient-to-r from-blue-600/10 to-purple-600/10 border border-white/10' : 'bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100/50'
+          }`}>
+            <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl ${darkMode ? 'bg-blue-500/10' : 'bg-blue-400/10'}`} />
+            <div className={`absolute bottom-0 left-0 w-64 h-64 rounded-full blur-3xl ${darkMode ? 'bg-purple-500/10' : 'bg-purple-400/10'}`} />
+            <div className="relative z-10">
+              <Sparkle className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+              <h2 className={`text-3xl md:text-4xl font-bold ${themeClasses.text} mb-4`}>
+                Ready to Get Started?
+              </h2>
+              <p className={`${themeClasses.textSec} mb-8 max-w-2xl mx-auto`}>
+                Join thousands of users who are already using AnonQ to receive honest, anonymous feedback.
+              </p>
+              <Link href="/register">
+                <Button darkMode={darkMode} size="lg">
+                  Create Free Account <MoveRight size={18} />
+                </Button>
+              </Link>
+            </div>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       <Footer darkMode={darkMode} />

@@ -6,50 +6,126 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 interface ThemeContextType {
   darkMode: boolean
   toggleTheme: () => void
+  profileTheme: string
+  setProfileTheme: (theme: string) => void
+  customFont: string
+  setCustomFont: (font: string) => void
+  customCSS: string
+  setCustomCSS: (css: string) => void
+}
+
+export const THEMES = {
+  dark: {
+    name: 'Dark',
+    bg: '#000000',
+    text: '#ffffff',
+    textSecondary: '#9ca3af',
+    card: 'rgba(255,255,255,0.05)',
+    border: 'rgba(255,255,255,0.08)',
+    accent: '#3b82f6',
+    shadow: 'rgba(0,0,0,0.5)',
+  },
+  light: {
+    name: 'Light',
+    bg: '#f8fafc',
+    text: '#0f172a',
+    textSecondary: '#64748b',
+    card: '#ffffff',
+    border: 'rgba(0,0,0,0.06)',
+    accent: '#3b82f6',
+    shadow: 'rgba(0,0,0,0.08)',
+  },
+  neon: {
+    name: 'Neon',
+    bg: '#0a0a0a',
+    text: '#00ff41',
+    textSecondary: 'rgba(0,255,65,0.6)',
+    card: 'rgba(0,255,65,0.05)',
+    border: 'rgba(0,255,65,0.15)',
+    accent: '#00ff41',
+    shadow: 'rgba(0,255,65,0.2)',
+  },
+  minimal: {
+    name: 'Minimal',
+    bg: '#f5f5f5',
+    text: '#1a1a1a',
+    textSecondary: '#666666',
+    card: '#ffffff',
+    border: '#e0e0e0',
+    accent: '#1a1a1a',
+    shadow: 'rgba(0,0,0,0.06)',
+  },
+  sunset: {
+    name: 'Sunset',
+    bg: '#1a0a1a',
+    text: '#ff6b6b',
+    textSecondary: 'rgba(255,107,107,0.6)',
+    card: 'rgba(255,107,107,0.05)',
+    border: 'rgba(255,107,107,0.15)',
+    accent: '#ff6b6b',
+    shadow: 'rgba(255,107,107,0.2)',
+  },
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [darkMode, setDarkMode] = useState(true)
-  const [mounted, setMounted] = useState(false)
+  const [profileTheme, setProfileTheme] = useState('dark')
+  const [customFont, setCustomFont] = useState('inter')
+  const [customCSS, setCustomCSS] = useState('')
 
   useEffect(() => {
-    setMounted(true)
-    const savedTheme = localStorage.getItem('theme')
-    const isDark = savedTheme !== 'light'
-    setDarkMode(isDark)
-    
-    if (isDark) {
-      document.documentElement.classList.add('dark')
-      document.documentElement.classList.remove('light')
-    } else {
-      document.documentElement.classList.add('light')
-      document.documentElement.classList.remove('dark')
+    const saved = localStorage.getItem('darkMode')
+    if (saved !== null) {
+      setDarkMode(saved === 'true')
+    }
+    const savedTheme = localStorage.getItem('profileTheme')
+    if (savedTheme) {
+      setProfileTheme(savedTheme)
+    }
+    const savedFont = localStorage.getItem('customFont')
+    if (savedFont) {
+      setCustomFont(savedFont)
+    }
+    const savedCSS = localStorage.getItem('customCSS')
+    if (savedCSS) {
+      setCustomCSS(savedCSS)
     }
   }, [])
 
   const toggleTheme = () => {
-    const newDarkMode = !darkMode
-    setDarkMode(newDarkMode)
-    localStorage.setItem('theme', newDarkMode ? 'dark' : 'light')
-    
-    if (newDarkMode) {
-      document.documentElement.classList.remove('light')
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-      document.documentElement.classList.add('light')
-    }
+    const newMode = !darkMode
+    setDarkMode(newMode)
+    localStorage.setItem('darkMode', String(newMode))
   }
 
-  // Prevent hydration mismatch
-  if (!mounted) {
-    return null
+  const handleSetProfileTheme = (theme: string) => {
+    setProfileTheme(theme)
+    localStorage.setItem('profileTheme', theme)
+  }
+
+  const handleSetCustomFont = (font: string) => {
+    setCustomFont(font)
+    localStorage.setItem('customFont', font)
+  }
+
+  const handleSetCustomCSS = (css: string) => {
+    setCustomCSS(css)
+    localStorage.setItem('customCSS', css)
   }
 
   return (
-    <ThemeContext.Provider value={{ darkMode, toggleTheme }}>
+    <ThemeContext.Provider value={{
+      darkMode,
+      toggleTheme,
+      profileTheme,
+      setProfileTheme: handleSetProfileTheme,
+      customFont,
+      setCustomFont: handleSetCustomFont,
+      customCSS,
+      setCustomCSS: handleSetCustomCSS,
+    }}>
       {children}
     </ThemeContext.Provider>
   )

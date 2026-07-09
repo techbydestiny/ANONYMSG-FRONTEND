@@ -1,14 +1,17 @@
 // app/dashboard/components/DashboardSettings.tsx
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import NextLink from 'next/link'
 import { 
   Palette, Share2, User, Shield, Eye, AlertCircle, 
   Camera, Trash2, Save, ArrowRight, Globe, 
-  Loader2, Upload
+  Loader2, Upload, Sparkles, Check, Code, Font,
+  Copy, ExternalLink, X, MessageSquare, Link2, Twitter, Instagram, Github, Youtube
 } from 'lucide-react'
 import { FaTwitter, FaInstagram, FaYoutube, FaGithub } from 'react-icons/fa'
+import { DashboardCustomization } from './DashboardCustomization'
+import { EmbedGenerator } from '@/app/components/EmbedGenerator'
 
 interface SocialLinks {
   twitter: string
@@ -47,6 +50,7 @@ interface DashboardSettingsProps {
   setProfilePreview?: (preview: string | null) => void
   bannerPreview?: string | null
   setBannerPreview?: (preview: string | null) => void
+  onCustomizationSave?: (data: any) => void
 }
 
 const socialFields: { id: keyof SocialLinks; label: string; icon: any; placeholder: string }[] = [
@@ -81,10 +85,13 @@ export function DashboardSettings({
   isSaving = false,
   isUploading = null,
   selectedColor, 
-  setSelectedColor
+  setSelectedColor,
+  onCustomizationSave
 }: DashboardSettingsProps) {
   const profileInputRef = useRef<HTMLInputElement>(null)
   const bannerInputRef = useRef<HTMLInputElement>(null)
+  const [showCustomization, setShowCustomization] = useState(false)
+  const [showEmbedGenerator, setShowEmbedGenerator] = useState(false)
 
   const themeClasses = {
     text: darkMode ? 'text-white' : 'text-gray-900',
@@ -103,11 +110,36 @@ export function DashboardSettings({
     <div className="space-y-6 max-w-2xl">
       {/* Page Customization */}
       <div className={`${themeClasses.card} rounded-xl p-5`}>
-        <h3 className={`text-base font-medium ${themeClasses.text} mb-4 flex items-center gap-2`}>
-          <Palette size="18" className="text-gray-500" />
-          Page Customization
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Palette size="18" className="text-gray-500" />
+            <h3 className={`text-base font-medium ${themeClasses.text}`}>Page Customization</h3>
+          </div>
+          <button
+            onClick={() => setShowCustomization(!showCustomization)}
+            className={`px-3 py-1.5 rounded-lg text-sm transition flex items-center gap-1 ${themeClasses.buttonSecondary}`}
+          >
+            {showCustomization ? (
+              <>
+                <X size={14} /> Close
+              </>
+            ) : (
+              <>
+                <Sparkles size={14} /> Advanced
+              </>
+            )}
+          </button>
+        </div>
         <p className={`text-sm ${themeClasses.textSecondary} mb-6`}>Customize how your public profile looks to visitors</p>
+
+        {showCustomization && (
+          <div className="mb-6">
+            <DashboardCustomization 
+              darkMode={darkMode} 
+              onSave={onCustomizationSave}
+            />
+          </div>
+        )}
 
         {/* Banner Image Upload */}
         <div className="mb-6">
@@ -241,7 +273,7 @@ export function DashboardSettings({
         </div>
       </div>
 
-      {/* Account Settings - Email is NOT changeable */}
+      {/* Account Settings */}
       <div className={`${themeClasses.card} rounded-xl p-5`}>
         <h3 className={`text-base font-medium ${themeClasses.text} mb-4 flex items-center gap-2`}>
           <User size="18" className="text-gray-500" />
@@ -256,6 +288,9 @@ export function DashboardSettings({
               onChange={(e) => onSettingsChange('username', e.target.value)}
               className={`w-full ${themeClasses.input} rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
             />
+            <p className={`text-xs ${themeClasses.textSecondary} mt-1`}>
+              Your public profile URL: <span className="text-blue-500">/{settingsForm.username || 'username'}</span>
+            </p>
           </div>
           <div>
             <label className={`block text-sm font-medium ${themeClasses.textSecondary} mb-1`}>Email</label>
@@ -275,7 +310,7 @@ export function DashboardSettings({
       <div className={`${themeClasses.card} rounded-xl p-5`}>
         <h3 className={`text-base font-medium ${themeClasses.text} mb-4 flex items-center gap-2`}>
           <Shield size="18" className="text-gray-500" />
-          Privacy
+          Privacy Settings
         </h3>
         <div className="space-y-3">
           <label className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer ${themeClasses.hover}`}>
@@ -283,7 +318,7 @@ export function DashboardSettings({
               type="checkbox"
               checked={settingsForm.publicWall || false}
               onChange={(e) => onSettingsChange('publicWall', e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 dark:border-gray-600"
+              className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-500 focus:ring-blue-500"
             />
             <span className={`text-sm ${themeClasses.textSecondary}`}>Show public message wall</span>
           </label>
@@ -292,7 +327,7 @@ export function DashboardSettings({
               type="checkbox"
               checked={settingsForm.allowVoice || false}
               onChange={(e) => onSettingsChange('allowVoice', e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 dark:border-gray-600"
+              className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-500 focus:ring-blue-500"
             />
             <span className={`text-sm ${themeClasses.textSecondary}`}>Allow voice messages</span>
           </label>
@@ -301,25 +336,93 @@ export function DashboardSettings({
               type="checkbox"
               checked={settingsForm.autoDelete || false}
               onChange={(e) => onSettingsChange('autoDelete', e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 dark:border-gray-600"
+              className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-500 focus:ring-blue-500"
             />
-            <span className={`text-sm ${themeClasses.textSecondary}`}>Auto-delete after 30 days</span>
+            <span className={`text-sm ${themeClasses.textSecondary}`}>Auto-delete messages after 30 days</span>
           </label>
         </div>
       </div>
 
-      {/* Live Preview - Without @ symbol */}
+      {/* Embed Widget - NEW */}
+      <div className={`${themeClasses.card} rounded-xl p-5`}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Code size="18" className="text-purple-500" />
+            <h3 className={`text-base font-medium ${themeClasses.text}`}>Embed Widget</h3>
+          </div>
+          <button
+            onClick={() => setShowEmbedGenerator(!showEmbedGenerator)}
+            className={`px-3 py-1.5 rounded-lg text-sm transition flex items-center gap-1 ${themeClasses.buttonSecondary}`}
+          >
+            {showEmbedGenerator ? (
+              <>
+                <X size={14} /> Close
+              </>
+            ) : (
+              <>
+                <Link2 size={14} /> Generate Code
+              </>
+            )}
+          </button>
+        </div>
+        <p className={`text-sm ${themeClasses.textSecondary} mb-4`}>
+          Embed an anonymous message box on your website. Copy and paste the code below.
+        </p>
+
+        {showEmbedGenerator && (
+          <div className="mt-4">
+            <EmbedGenerator 
+              username={settingsForm.username || 'user'} 
+              darkMode={darkMode} 
+            />
+          </div>
+        )}
+
+        {/* Quick preview if not expanded */}
+        {!showEmbedGenerator && (
+          <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-800/50' : 'bg-gray-50'} border border-gray-200 dark:border-gray-700`}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                <MessageSquare size={16} className="text-white" />
+              </div>
+              <div>
+                <p className={`text-sm font-medium ${themeClasses.text}`}>Anonymous Message Widget</p>
+                <p className={`text-xs ${themeClasses.textSecondary}`}>Allow visitors to send you anonymous messages</p>
+              </div>
+              <button
+                onClick={() => setShowEmbedGenerator(true)}
+                className={`ml-auto px-3 py-1.5 rounded-lg text-xs transition ${themeClasses.buttonSecondary}`}
+              >
+                Configure
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Live Preview */}
       <div className={`${themeClasses.card} rounded-xl p-5`}>
         <h3 className={`text-base font-medium ${themeClasses.text} mb-4 flex items-center gap-2`}>
           <Eye size="18" className="text-gray-500" />
           Live Preview
         </h3>
         <p className={`text-sm ${themeClasses.textSecondary} mb-4`}>See how your page looks to visitors</p>
-        <NextLink href={`/${settingsForm.username || 'user'}`} target="_blank">
-          <button className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 ${darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'} rounded-xl transition text-sm ${themeClasses.text}`}>
-            View Your Public Page <ArrowRight size={14} />
+        <div className="flex flex-col sm:flex-row gap-3">
+          <NextLink href={`/${settingsForm.username || 'user'}`} target="_blank" className="flex-1">
+            <button className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 ${darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'} rounded-xl transition text-sm ${themeClasses.text}`}>
+              View Your Public Page <ExternalLink size={14} />
+            </button>
+          </NextLink>
+          <button 
+            onClick={() => {
+              const url = `${window.location.origin}/${settingsForm.username || 'user'}`
+              navigator.clipboard.writeText(url)
+            }}
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 ${themeClasses.buttonSecondary} rounded-xl transition text-sm`}
+          >
+            <Copy size={14} /> Copy Link
           </button>
-        </NextLink>
+        </div>
       </div>
 
       {/* Danger Zone */}
@@ -337,7 +440,7 @@ export function DashboardSettings({
         <button
           onClick={onSave}
           disabled={isSaving}
-          className={`px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition flex items-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed`}
+          className={`px-6 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl transition flex items-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/25`}
         >
           {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {isSaving ? 'Saving...' : 'Save All Changes'}

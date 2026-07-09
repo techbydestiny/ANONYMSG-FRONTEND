@@ -6,24 +6,36 @@ import { useRouter } from 'next/navigation'
 import { useTheme } from '@/app/context/ThemeContext'
 import Link from 'next/link'
 import { 
-  Inbox, BarChart3, Settings, LogOut, Sun, Moon, Crown, User, Archive,
-  Share2, Menu, X, AlertCircle, Loader2, Check
+  Menu, X, AlertCircle, Loader2, Check,
+  MessageSquare, Plus, Share2, Trash2, BarChart3, Archive, Settings, LogOut, Sun, Moon,
+  Copy  
 } from 'lucide-react'
 
-// Import your existing components
+// Import components
+import { DashboardSidebar } from './components/DashboardSidebar'
 import { DashboardInbox } from './components/DashboardInbox'
 import { DashboardAnalytics } from './components/DashboardAnalytics'
+import { DashboardArchive } from './components/DashboardArchive'
 import { DashboardSettings } from './components/DashboardSettings'
+import DashboardQAPage from './qa/page'
 
 // Import API client
-import { profileAPI, messagesAPI, authAPI, API_BASE_URL } from '@/lib/api'
+import { profileAPI, messagesAPI, API_BASE_URL } from '@/lib/api'
+
+// Import PWA hook
+import { usePWA } from '@/hooks/usePWA'
 
 // Types
 interface Message {
-  id: number
+  id: string
   content: string
   created_at: string
   is_read: boolean
+  is_archived: boolean
+  message_type: string
+  media_url: string | null
+  media_duration: number | null
+  is_pinned: boolean
 }
 
 interface SettingsForm {
@@ -48,14 +60,16 @@ interface SettingsForm {
 export default function DashboardPage() {
   const router = useRouter()
   const { darkMode, toggleTheme } = useTheme()
+  const { isPWA, showInstallPrompt, installApp, dismissPrompt, isInstalling } = usePWA()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState<'profile' | 'banner' | null>(null)
   const [showSavedAlert, setShowSavedAlert] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'inbox' | 'analytics' | 'settings'>('inbox')
+  const [activeTab, setActiveTab] = useState<'inbox' | 'analytics' | 'settings' | 'archive' | 'qa'>('inbox')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
+  const [archivedMessages, setArchivedMessages] = useState<Message[]>([])
   const [settings, setSettings] = useState<SettingsForm>({
     username: '',
     email: '',
@@ -75,7 +89,9 @@ export default function DashboardPage() {
     unread: 0, 
     thisWeek: 0, 
     streak: 0,
-    responseRate: 0
+    responseRate: 0,
+    avg_response_time: '2.4h',
+    top_reaction: '🔥'
   })
 
   // Image upload handlers
@@ -143,7 +159,6 @@ export default function DashboardPage() {
     try {
       const token = localStorage.getItem('access_token')
       
-      // Update user account (username and email)
       const userResponse = await fetch(`${API_BASE_URL}/auth/me/`, {
         method: 'PATCH',
         headers: {
@@ -161,7 +176,6 @@ export default function DashboardPage() {
         throw new Error(errorData.error || 'Failed to update account')
       }
       
-      // Update profile settings (bio, color, social links)
       const profileResponse = await fetch(`${API_BASE_URL}/profile/`, {
         method: 'PATCH',
         headers: {
@@ -175,6 +189,7 @@ export default function DashboardPage() {
           instagram: settings.socialLinks.instagram,
           youtube: settings.socialLinks.youtube,
           website: settings.socialLinks.website,
+          github: settings.socialLinks.github,
         }),
       })
       
@@ -202,7 +217,6 @@ export default function DashboardPage() {
       }
       
       try {
-        // Fetch profile using API client
         const profileRes = await profileAPI.getProfile()
         const profileData = await profileRes.json()
         
@@ -225,23 +239,22 @@ export default function DashboardPage() {
           }
         })
         
-        // Fetch messages using API client
         const messagesRes = await messagesAPI.getInbox()
         const messagesData = await messagesRes.json()
         const fetchedMessages = messagesData.results || []
-        setMessages(fetchedMessages)
+        setMessages(fetchedMessages.filter((m: Message) => !m.is_archived))
+        setArchivedMessages(fetchedMessages.filter((m: Message) => m.is_archived))
         
-        // Calculate stats
-        const total = fetchedMessages.length
-        const unread = fetchedMessages.filter((m: Message) => !m.is_read).length
+        const total = fetchedMessages.filter((m: Message) => !m.is_archived).length
+        const unread = fetchedMessages.filter((m: Message) => !m.is_archived && !m.is_read).length
         
-        // Calculate This Week (last 7 days)
         const oneWeekAgo = new Date()
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
-        const thisWeek = fetchedMessages.filter((m: Message) => new Date(m.created_at) >= oneWeekAgo).length
+        const thisWeek = fetchedMessages.filter((m: Message) => new Date(m.created_at) >= oneWeekAgo && !m.is_archived).length
         
-        // Calculate Streak
-        const dates: string[] = fetchedMessages.map((m: Message) => new Date(m.created_at).toDateString())
+        const dates: string[] = fetchedMessages
+          .filter((m: Message) => !m.is_archived)
+          .map((m: Message) => new Date(m.created_at).toDateString())
         const uniqueDates: string[] = [...new Set(dates)].sort()
         let streak = 0
         let currentStreak = 0
@@ -263,8 +276,7 @@ export default function DashboardPage() {
           lastDate = currentDate
         }
         
-        // Calculate response rate
-        const read = fetchedMessages.filter((m: Message) => m.is_read).length
+        const read = fetchedMessages.filter((m: Message) => !m.is_archived && m.is_read).length
         const responseRate = total > 0 ? Math.round((read / total) * 100) : 0
         
         setStats({
@@ -272,7 +284,9 @@ export default function DashboardPage() {
           unread,
           thisWeek,
           streak,
-          responseRate
+          responseRate,
+          avg_response_time: '2.4h',
+          top_reaction: '🔥'
         })
         
       } catch (error) {
@@ -292,11 +306,11 @@ export default function DashboardPage() {
   }
 
   const shareLink = () => {
-    navigator.clipboard.writeText(`${window.location.origin}/@${settings.username}`)
+    navigator.clipboard.writeText(`${window.location.origin}/${settings.username}`)
     alert('Profile link copied!')
   }
 
-  const deleteMessage = async (id: number) => {
+  const deleteMessage = async (id: string) => {
     const response = await messagesAPI.deleteMessage(id)
     if (response.ok) {
       setMessages(messages.filter(m => m.id !== id))
@@ -308,10 +322,14 @@ export default function DashboardPage() {
     }
   }
 
-  const archiveMessage = async (id: number) => {
+  const archiveMessage = async (id: string) => {
     const response = await messagesAPI.archiveMessage(id)
     if (response.ok) {
+      const archivedMsg = messages.find(m => m.id === id)
       setMessages(messages.filter(m => m.id !== id))
+      if (archivedMsg) {
+        setArchivedMessages([{ ...archivedMsg, is_archived: true }, ...archivedMessages])
+      }
       setStats(prev => ({
         ...prev,
         total: prev.total - 1,
@@ -320,7 +338,32 @@ export default function DashboardPage() {
     }
   }
 
-  const markAsRead = async (id: number) => {
+  const restoreMessage = async (id: string) => {
+    const response = await messagesAPI.restoreMessage(id)
+    if (response.ok) {
+      const restoredMsg = archivedMessages.find(m => m.id === id)
+      setArchivedMessages(archivedMessages.filter(m => m.id !== id))
+      if (restoredMsg) {
+        setMessages([{ ...restoredMsg, is_archived: false }, ...messages])
+        setStats(prev => ({
+          ...prev,
+          total: prev.total + 1,
+          unread: restoredMsg.is_read ? prev.unread : prev.unread + 1
+        }))
+      }
+    }
+  }
+
+  const permanentDeleteMessage = async (id: string) => {
+    if (confirm('Permanently delete this message? This cannot be undone.')) {
+      const response = await messagesAPI.permanentDelete(id)
+      if (response.ok) {
+        setArchivedMessages(archivedMessages.filter(m => m.id !== id))
+      }
+    }
+  }
+
+  const markAsRead = async (id: string) => {
     const response = await messagesAPI.markAsRead(id)
     if (response.ok) {
       setMessages(messages.map(m => m.id === id ? { ...m, is_read: true } : m))
@@ -354,18 +397,106 @@ export default function DashboardPage() {
   }
 
   const themeClasses = {
-    bg: darkMode ? 'bg-black' : 'bg-white',
-    sidebar: darkMode ? 'bg-gray-900' : 'bg-gray-50',
-    border: darkMode ? 'border-gray-800' : 'border-gray-200',
+    bg: darkMode ? 'bg-black' : 'bg-gray-50',
     text: darkMode ? 'text-white' : 'text-gray-900',
     textSec: darkMode ? 'text-gray-400' : 'text-gray-500',
-    inactive: darkMode ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-500 hover:bg-gray-100',
+    border: darkMode ? 'border-white/10' : 'border-gray-200/50',
+  }
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'inbox':
+        return (
+          <DashboardInbox 
+            messages={messages}
+            stats={stats}
+            darkMode={darkMode}
+            onMarkAsRead={markAsRead}
+            onMarkAllAsRead={markAllAsRead}
+            onDelete={deleteMessage}
+            onArchive={archiveMessage}
+            onExport={exportMessages}
+            onShareLink={shareLink}
+            onShareImage={generateShareImage}
+            onReport={handleReport}
+            onPinMessage={async (id: string) => {
+              const response = await messagesAPI.pinMessage(id)
+              if (response.ok) {
+                setMessages(messages.map(m => 
+                  m.id === id ? { ...m, is_pinned: !m.is_pinned } : m
+                ))
+              }
+            }}
+            username={settings.username}
+            brandColor={settings.teamColor}
+            profilePicture={settings.profilePicture}
+          />
+        )
+      case 'archive':
+        return (
+          <DashboardArchive
+            archivedMessages={archivedMessages}
+            darkMode={darkMode}
+            onRestore={restoreMessage}
+            onPermanentDelete={permanentDeleteMessage}
+            onMarkAsRead={markAsRead}
+          />
+        )
+      case 'qa':
+        return <DashboardQAPage />
+      case 'analytics':
+        return <DashboardAnalytics stats={stats} darkMode={darkMode} messages={messages} />
+      case 'settings':
+        return (
+          <DashboardSettings 
+            settingsForm={settings}
+            darkMode={darkMode}
+            onSettingsChange={(field: string, value: any) => setSettings({ ...settings, [field]: value })}
+            onSocialLinkChange={(platform: string, value: string) => setSettings({ ...settings, socialLinks: { ...settings.socialLinks, [platform]: value } })}
+            onImageUpload={handleImageUpload}
+            onImageRemove={handleImageRemove}
+            onSave={saveSettings}
+            isSaving={saving}
+            isUploading={uploading}
+            selectedColor={settings.teamColor}
+            setSelectedColor={(color: string) => setSettings({ ...settings, teamColor: color })}
+            profilePreview={settings.profilePicture}
+            setProfilePreview={() => {}}
+            bannerPreview={settings.bannerImage}
+            setBannerPreview={() => {}}
+            onCustomizationSave={(data) => console.log('Customization saved:', data)}
+          />
+        )
+      default:
+        return null
+    }
+  }
+
+  const getTabTitle = () => {
+    switch (activeTab) {
+      case 'inbox': return 'Messages'
+      case 'archive': return 'Archive'
+      case 'qa': return 'Q&A'
+      case 'analytics': return 'Analytics'
+      case 'settings': return 'Settings'
+      default: return ''
+    }
+  }
+
+  const getTabSubtitle = () => {
+    switch (activeTab) {
+      case 'inbox': return `${stats.unread} unread messages`
+      case 'archive': return `${archivedMessages.length} archived messages`
+      case 'qa': return 'Host and manage your Q&A sessions'
+      case 'analytics': return 'Message insights and statistics'
+      default: return ''
+    }
   }
 
   if (loading) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${themeClasses.bg}`}>
-        <Loader2 size={32} className="animate-spin text-blue-600" />
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -377,7 +508,7 @@ export default function DashboardPage() {
           <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
           <h2 className={`text-xl font-semibold ${themeClasses.text} mb-2`}>Error</h2>
           <p className={themeClasses.textSec}>{error}</p>
-          <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg">
+          <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-xl">
             Try Again
           </button>
         </div>
@@ -387,183 +518,165 @@ export default function DashboardPage() {
 
   return (
     <div className={`min-h-screen ${themeClasses.bg}`}>
-      {/* Success Alert */}
       {showSavedAlert && (
-        <div className="fixed top-20 right-4 z-50 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
+        <div className="fixed top-20 right-4 z-50 bg-green-500 text-white px-4 py-2 rounded-xl shadow-lg flex items-center gap-2 animate-in">
           <Check size={16} /> Settings saved!
         </div>
       )}
 
-      {/* Mobile Menu Button */}
+      {showInstallPrompt && !isPWA && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-gradient-to-r from-blue-500 to-purple-600 shadow-lg">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">📱</span>
+              </div>
+              <div>
+                <h3 className="text-white font-semibold">Install AnonQ App</h3>
+                <p className="text-white/70 text-sm">Get the full app experience</p>
+              </div>
+            </div>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button
+                onClick={dismissPrompt}
+                className="px-4 py-2 text-white hover:bg-white/10 rounded-xl transition flex-1 sm:flex-none"
+              >
+                Later
+              </button>
+              <button
+                onClick={installApp}
+                disabled={isInstalling}
+                className="px-6 py-2 bg-white text-blue-600 hover:bg-gray-100 rounded-xl font-medium transition flex-1 sm:flex-none disabled:opacity-50"
+              >
+                {isInstalling ? 'Installing...' : 'Install App'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <button
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="lg:hidden fixed top-20 left-4 z-50 p-2 rounded-lg bg-white dark:bg-gray-800 shadow-md"
+        className="lg:hidden fixed top-20 left-4 z-50 p-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 shadow-lg"
       >
         {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
-      {/* Mobile Sidebar */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setMobileMenuOpen(false)} />
       )}
       <div className={`
         fixed top-0 left-0 bottom-0 w-64 z-50 transform transition-transform duration-300 lg:hidden
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-        ${themeClasses.sidebar} border-r ${themeClasses.border}
+        ${darkMode ? 'bg-black border-white/10' : 'bg-white border-gray-200/50'} border-r backdrop-blur-md
       `}>
         <div className="p-6">
-          <div className="flex items-center gap-3 mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3 mb-8 pb-8 border-b border-gray-200/50 dark:border-white/10">
             {settings.profilePicture ? (
               <img 
                 src={settings.profilePicture} 
                 alt={settings.username}
-                className="w-10 h-10 rounded-xl object-cover"
+                className="w-10 h-10 rounded-xl object-cover border-2 border-blue-500/20"
               />
             ) : (
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-                <User className="text-white" size={20} />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                <span className="text-white font-bold text-sm">
+                  {settings.username ? settings.username.charAt(0).toUpperCase() : '?'}
+                </span>
               </div>
             )}
             <div>
               <p className={`font-medium ${themeClasses.text}`}>@{settings.username}</p>
-              <p className="text-xs text-gray-500">Pro Member</p>
+              <p className="text-xs text-gray-500">Member</p>
             </div>
           </div>
           <nav className="space-y-1">
-            <button onClick={() => { setActiveTab('inbox'); setMobileMenuOpen(false) }} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${activeTab === 'inbox' ? 'bg-blue-600 text-white' : themeClasses.inactive}`}>
-              <Inbox size={18} /> Inbox
-              {stats.unread > 0 && <span className="ml-auto bg-blue-500 text-white text-xs px-2 rounded-full">{stats.unread}</span>}
-            </button>
-            <Link href="/dashboard/archive" onClick={() => setMobileMenuOpen(false)} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${themeClasses.inactive}`}>
-              <Archive size={18} /> Archive
-            </Link>
-            <button onClick={() => { setActiveTab('analytics'); setMobileMenuOpen(false) }} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${activeTab === 'analytics' ? 'bg-blue-600 text-white' : themeClasses.inactive}`}>
-              <BarChart3 size={18} /> Analytics
-            </button>
-            <button onClick={() => { setActiveTab('settings'); setMobileMenuOpen(false) }} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${activeTab === 'settings' ? 'bg-blue-600 text-white' : themeClasses.inactive}`}>
-              <Settings size={18} /> Settings
-            </button>
+            {[
+              { icon: MessageSquare, label: 'Inbox', tab: 'inbox', badge: stats.unread },
+              { icon: Archive, label: 'Archive', tab: 'archive', badge: archivedMessages.length },
+              { icon: Plus, label: 'Q&A', tab: 'qa', badge: 0 },
+              { icon: BarChart3, label: 'Analytics', tab: 'analytics', badge: 0 },
+              { icon: Settings, label: 'Settings', tab: 'settings', badge: 0 },
+            ].map((item) => (
+              <button
+                key={item.label}
+                onClick={() => { setActiveTab(item.tab as any); setMobileMenuOpen(false) }}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition ${
+                  activeTab === item.tab
+                    ? darkMode ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-900'
+                    : darkMode ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                <item.icon size={18} />
+                <span className="flex-1 text-left">{item.label}</span>
+                {item.badge > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500 text-white">
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            ))}
           </nav>
-          <div className="absolute bottom-6 left-6 right-6 pt-6 border-t border-gray-200 dark:border-gray-700 space-y-2">
-            <button onClick={toggleTheme} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${themeClasses.inactive}`}>
+          <div className="absolute bottom-6 left-6 right-6 pt-6 border-t border-gray-200/50 dark:border-white/10 space-y-2">
+            <button onClick={toggleTheme} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition ${darkMode ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'}`}>
               {darkMode ? <Sun size={18} /> : <Moon size={18} />} {darkMode ? 'Light Mode' : 'Dark Mode'}
             </button>
-            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-500/10">
+            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-red-500 hover:bg-red-500/10 transition">
               <LogOut size={18} /> Logout
             </button>
           </div>
         </div>
       </div>
 
-      {/* Desktop Sidebar */}
-      <div className={`hidden lg:block fixed left-0 top-16 bottom-0 w-64 ${themeClasses.sidebar} border-r ${themeClasses.border} overflow-y-auto`}>
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
-            {settings.profilePicture ? (
-              <img 
-                src={settings.profilePicture} 
-                alt={settings.username}
-                className="w-10 h-10 rounded-xl object-cover"
-              />
-            ) : (
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-                <User className="text-white" size={20} />
-              </div>
-            )}
-            <div>
-              <p className={`font-medium ${themeClasses.text}`}>@{settings.username}</p>
-              <p className="text-xs text-gray-500">Pro Member</p>
-            </div>
-          </div>
-          <nav className="space-y-1">
-            <button onClick={() => setActiveTab('inbox')} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${activeTab === 'inbox' ? 'bg-blue-600 text-white' : themeClasses.inactive}`}>
-              <Inbox size={18} /> Inbox
-              {stats.unread > 0 && <span className="ml-auto bg-blue-500 text-white text-xs px-2 rounded-full">{stats.unread}</span>}
-            </button>
-            <Link href="/dashboard/archive" className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${themeClasses.inactive}`}>
-              <Archive size={18} /> Archive
-            </Link>
-            <button onClick={() => setActiveTab('analytics')} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${activeTab === 'analytics' ? 'bg-blue-600 text-white' : themeClasses.inactive}`}>
-              <BarChart3 size={18} /> Analytics
-            </button>
-            <button onClick={() => setActiveTab('settings')} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${activeTab === 'settings' ? 'bg-blue-600 text-white' : themeClasses.inactive}`}>
-              <Settings size={18} /> Settings
-            </button>
-          </nav>
-          <div className="absolute bottom-6 left-6 right-6 pt-6 border-t border-gray-200 dark:border-gray-700 space-y-2">
-            <button onClick={toggleTheme} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${themeClasses.inactive}`}>
-              {darkMode ? <Sun size={18} /> : <Moon size={18} />} {darkMode ? 'Light Mode' : 'Dark Mode'}
-            </button>
-            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-500/10">
-              <LogOut size={18} /> Logout
-            </button>
-          </div>
-        </div>
-      </div>
+      <DashboardSidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        username={settings.username}
+        unreadCount={stats.unread}
+        onLogout={handleLogout}
+        profilePicture={settings.profilePicture}
+      />
 
-      {/* Main Content */}
       <main className="lg:ml-64 pt-20">
         <div className={`border-b ${themeClasses.border} px-6 py-4`}>
           <div className="flex justify-between items-center flex-wrap gap-3">
             <div>
               <h1 className={`text-2xl font-bold ${themeClasses.text}`}>
-                {activeTab === 'inbox' && 'Messages'}
-                {activeTab === 'analytics' && 'Analytics'}
-                {activeTab === 'settings' && 'Settings'}
+                {getTabTitle()}
               </h1>
               <p className={`text-sm ${themeClasses.textSec}`}>
-                {activeTab === 'inbox' && `${stats.unread} unread messages`}
+                {getTabSubtitle()}
               </p>
             </div>
-            <button onClick={shareLink} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-sm flex items-center gap-2">
-              <Share2 size={14} /> Share Profile
-            </button>
+            {activeTab === 'inbox' && (
+              <button onClick={shareLink} className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-lg shadow-blue-500/25">
+                <Share2 size={14} /> Share Profile
+              </button>
+            )}
+            {activeTab === 'qa' && (
+              <Link href="/dashboard/qa">
+                <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-lg shadow-blue-500/25">
+                  <Plus size={14} /> New Session
+                </button>
+              </Link>
+            )}
+            {activeTab === 'archive' && archivedMessages.length > 0 && (
+              <button 
+                onClick={() => {
+                  if (confirm('Empty archive? This will permanently delete all archived messages.')) {
+                    archivedMessages.forEach(m => permanentDeleteMessage(m.id))
+                  }
+                }}
+                className="px-4 py-2 bg-red-500 text-white rounded-xl text-sm font-medium transition flex items-center gap-2"
+              >
+                <Trash2 size={14} /> Empty Archive
+              </button>
+            )}
           </div>
         </div>
 
         <div className="p-6">
-          {activeTab === 'inbox' && (
-            <DashboardInbox 
-              messages={messages}
-              stats={stats}
-              darkMode={darkMode}
-              onMarkAsRead={markAsRead}
-              onMarkAllAsRead={markAllAsRead}
-              onDelete={deleteMessage}
-              onArchive={archiveMessage}
-              onExport={exportMessages}
-              onShareLink={shareLink}
-              onShareImage={generateShareImage}
-              onReport={handleReport}
-              username={settings.username}
-              brandColor={settings.teamColor}
-              profilePicture={settings.profilePicture}
-            />
-          )}
-
-          {activeTab === 'analytics' && (
-            <DashboardAnalytics stats={stats} darkMode={darkMode} />
-          )}
-
-          {activeTab === 'settings' && (
-            <DashboardSettings 
-              settingsForm={settings}
-              darkMode={darkMode}
-              onSettingsChange={(field, value) => setSettings({ ...settings, [field]: value })}
-              onSocialLinkChange={(platform, value) => setSettings({ ...settings, socialLinks: { ...settings.socialLinks, [platform]: value } })}
-              onImageUpload={handleImageUpload}
-              onImageRemove={handleImageRemove}
-              onSave={saveSettings}
-              isSaving={saving}
-              isUploading={uploading}
-              selectedColor={settings.teamColor}
-              setSelectedColor={(color) => setSettings({ ...settings, teamColor: color })}
-              profilePreview={settings.profilePicture}
-              setProfilePreview={() => {}}
-              bannerPreview={settings.bannerImage}
-              setBannerPreview={() => {}}
-            />
-          )}
+          {renderTabContent()}
         </div>
       </main>
     </div>

@@ -1,7 +1,25 @@
-import type { NextConfig } from "next";
+// frontend/next.config.ts
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  reactStrictMode: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8000',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.cloudinary.com',
+        pathname: '/**',
+      },
+    ],
+  },
+  // Add turbopack config to silence the warning
+  turbopack: {},
+}
 
-export default nextConfig;
+export default nextConfig
