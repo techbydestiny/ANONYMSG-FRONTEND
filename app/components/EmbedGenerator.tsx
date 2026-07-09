@@ -2,7 +2,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Copy, Check, Code, Sparkles } from 'lucide-react'
+import { Copy, Check, Code, Sparkles, MessageSquare } from 'lucide-react'
 
 interface EmbedGeneratorProps {
   username: string
