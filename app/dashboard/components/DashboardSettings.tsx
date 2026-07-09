@@ -6,8 +6,8 @@ import NextLink from 'next/link'
 import { 
   Palette, Share2, User, Shield, Eye, AlertCircle, 
   Camera, Trash2, Save, ArrowRight, Globe, 
-  Loader2, Upload, Sparkles, Check, Code, Font,
-  Copy, ExternalLink, X, MessageSquare, Link2, Twitter, Instagram, Github, Youtube
+  Loader2, Upload, Sparkles, Check, Code,
+  Copy, ExternalLink, X, MessageSquare, Link2,
 } from 'lucide-react'
 import { FaTwitter, FaInstagram, FaYoutube, FaGithub } from 'react-icons/fa'
 import { DashboardCustomization } from './DashboardCustomization'
