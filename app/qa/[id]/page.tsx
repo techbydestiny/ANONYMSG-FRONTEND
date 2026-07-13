@@ -212,9 +212,10 @@ export default function QASessionPage() {
     }
   }
 
+  // FIX: Convert number to string when calling API
   const upvoteQuestion = async (questionId: number) => {
     try {
-      const response = await qaAPI.upvoteQuestion(questionId)
+      const response = await qaAPI.upvoteQuestion(String(questionId))
       if (response.ok) {
         await fetchQuestions()
       }

@@ -88,13 +88,14 @@ export default function DashboardQAPage() {
     setIsSubmitting(true)
     
     try {
-      const startsAt = formData.starts_at ? new Date(formData.starts_at).toISOString() : null
+      // FIX: Ensure starts_at is never null - provide a default if empty
+      const startsAt = formData.starts_at ? new Date(formData.starts_at).toISOString() : new Date().toISOString()
       const endsAt = formData.ends_at ? new Date(formData.ends_at).toISOString() : null
 
       const sessionData = {
         title: formData.title,
         description: formData.description || '',
-        starts_at: startsAt,
+        starts_at: startsAt,  // Now always a string, never null
         ends_at: endsAt,
         allow_anonymous: formData.allow_anonymous,
         require_approval: formData.require_approval,

@@ -25,37 +25,8 @@ import { profileAPI, messagesAPI, API_BASE_URL } from '@/lib/api'
 // Import PWA hook
 import { usePWA } from '@/hooks/usePWA'
 
-// Types
-interface Message {
-  id: string
-  content: string
-  created_at: string
-  is_read: boolean
-  is_archived: boolean
-  message_type: string
-  media_url: string | null
-  media_duration: number | null
-  is_pinned: boolean
-}
-
-interface SettingsForm {
-  username: string
-  email: string
-  bio: string
-  teamColor: string
-  profilePicture: string | null
-  bannerImage: string | null
-  publicWall: boolean
-  allowVoice: boolean
-  autoDelete: boolean
-  socialLinks: {
-    twitter: string
-    instagram: string
-    youtube: string
-    website: string
-    github: string
-  }
-}
+// IMPORT THE TYPES FROM THE TYPES FILE
+import { Message, SettingsForm } from './types'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -74,14 +45,23 @@ export default function DashboardPage() {
     username: '',
     email: '',
     bio: '',
-    teamColor: '#3B82F6',
-    profilePicture: null,
-    bannerImage: null,
+    emailNotifications: true,
+    pushNotifications: true,
+    weeklyDigest: false,
     publicWall: true,
     allowVoice: true,
     autoDelete: false,
+    profilePicture: null,
+    bannerImage: null,
+    teamColor: '#3B82F6',
     socialLinks: {
-      twitter: '', instagram: '', youtube: '', website: '', github: ''
+      twitter: '',
+      instagram: '',
+      youtube: '',
+      tiktok: '',
+      github: '',
+      website: '',
+      discord: ''
     }
   })
   const [stats, setStats] = useState({
@@ -185,11 +165,16 @@ export default function DashboardPage() {
         body: JSON.stringify({
           bio: settings.bio,
           team_color: settings.teamColor,
+          public_wall: settings.publicWall,
+          allow_voice: settings.allowVoice,
+          auto_delete: settings.autoDelete,
           twitter: settings.socialLinks.twitter,
           instagram: settings.socialLinks.instagram,
           youtube: settings.socialLinks.youtube,
-          website: settings.socialLinks.website,
+          tiktok: settings.socialLinks.tiktok,
           github: settings.socialLinks.github,
+          website: settings.socialLinks.website,
+          discord: settings.socialLinks.discord,
         }),
       })
       
@@ -224,18 +209,23 @@ export default function DashboardPage() {
           username: profileData.username || '',
           email: profileData.email || '',
           bio: profileData.bio || '',
-          teamColor: profileData.team_color || '#3B82F6',
-          profilePicture: profileData.profile_picture || null,
-          bannerImage: profileData.banner_image || null,
+          emailNotifications: profileData.email_notifications !== undefined ? profileData.email_notifications : true,
+          pushNotifications: profileData.push_notifications !== undefined ? profileData.push_notifications : true,
+          weeklyDigest: profileData.weekly_digest !== undefined ? profileData.weekly_digest : false,
           publicWall: profileData.public_wall !== undefined ? profileData.public_wall : true,
           allowVoice: profileData.allow_voice !== undefined ? profileData.allow_voice : true,
           autoDelete: profileData.auto_delete !== undefined ? profileData.auto_delete : false,
+          profilePicture: profileData.profile_picture || null,
+          bannerImage: profileData.banner_image || null,
+          teamColor: profileData.team_color || '#3B82F6',
           socialLinks: {
             twitter: profileData.twitter || '',
             instagram: profileData.instagram || '',
             youtube: profileData.youtube || '',
+            tiktok: profileData.tiktok || '',
+            github: profileData.github || '',
             website: profileData.website || '',
-            github: profileData.github || ''
+            discord: profileData.discord || ''
           }
         })
         
@@ -310,36 +300,57 @@ export default function DashboardPage() {
     alert('Profile link copied!')
   }
 
+  // ============ HANDLERS FOR DASHBOARD INBOX (expect string IDs) ============
+  
   const deleteMessage = async (id: string) => {
+    const numId = parseInt(id)
     const response = await messagesAPI.deleteMessage(id)
     if (response.ok) {
-      setMessages(messages.filter(m => m.id !== id))
+      setMessages(messages.filter(m => m.id !== numId))
       setStats(prev => ({
         ...prev,
         total: prev.total - 1,
-        unread: messages.find(m => m.id === id && !m.is_read) ? prev.unread - 1 : prev.unread
+        unread: messages.find(m => m.id === numId && !m.is_read) ? prev.unread - 1 : prev.unread
       }))
     }
   }
 
   const archiveMessage = async (id: string) => {
+    const numId = parseInt(id)
     const response = await messagesAPI.archiveMessage(id)
     if (response.ok) {
-      const archivedMsg = messages.find(m => m.id === id)
-      setMessages(messages.filter(m => m.id !== id))
+      const archivedMsg = messages.find(m => m.id === numId)
+      setMessages(messages.filter(m => m.id !== numId))
       if (archivedMsg) {
         setArchivedMessages([{ ...archivedMsg, is_archived: true }, ...archivedMessages])
       }
       setStats(prev => ({
         ...prev,
         total: prev.total - 1,
-        unread: messages.find(m => m.id === id && !m.is_read) ? prev.unread - 1 : prev.unread
+        unread: messages.find(m => m.id === numId && !m.is_read) ? prev.unread - 1 : prev.unread
       }))
     }
   }
 
-  const restoreMessage = async (id: string) => {
-    const response = await messagesAPI.restoreMessage(id)
+  const markAsRead = async (id: string) => {
+    const numId = parseInt(id)
+    const response = await messagesAPI.markAsRead(id)
+    if (response.ok) {
+      setMessages(messages.map(m => m.id === numId ? { ...m, is_read: true } : m))
+      setStats(prev => ({ ...prev, unread: prev.unread - 1 }))
+    }
+  }
+
+  const markAllAsRead = async () => {
+    for (const message of messages.filter(m => !m.is_read)) {
+      await markAsRead(String(message.id))
+    }
+  }
+
+  // ============ HANDLERS FOR DASHBOARD ARCHIVE (expect number IDs) ============
+  
+  const restoreMessage = async (id: number) => {
+    const response = await messagesAPI.restoreMessage(String(id))
     if (response.ok) {
       const restoredMsg = archivedMessages.find(m => m.id === id)
       setArchivedMessages(archivedMessages.filter(m => m.id !== id))
@@ -354,26 +365,19 @@ export default function DashboardPage() {
     }
   }
 
-  const permanentDeleteMessage = async (id: string) => {
+  const permanentDeleteMessage = async (id: number) => {
     if (confirm('Permanently delete this message? This cannot be undone.')) {
-      const response = await messagesAPI.permanentDelete(id)
+      const response = await messagesAPI.permanentDelete(String(id))
       if (response.ok) {
         setArchivedMessages(archivedMessages.filter(m => m.id !== id))
       }
     }
   }
 
-  const markAsRead = async (id: string) => {
-    const response = await messagesAPI.markAsRead(id)
+  const markArchivedAsRead = async (id: number) => {
+    const response = await messagesAPI.markAsRead(String(id))
     if (response.ok) {
-      setMessages(messages.map(m => m.id === id ? { ...m, is_read: true } : m))
-      setStats(prev => ({ ...prev, unread: prev.unread - 1 }))
-    }
-  }
-
-  const markAllAsRead = async () => {
-    for (const message of messages.filter(m => !m.is_read)) {
-      await markAsRead(message.id)
+      setArchivedMessages(archivedMessages.map(m => m.id === id ? { ...m, is_read: true } : m))
     }
   }
 
@@ -423,7 +427,7 @@ export default function DashboardPage() {
               const response = await messagesAPI.pinMessage(id)
               if (response.ok) {
                 setMessages(messages.map(m => 
-                  m.id === id ? { ...m, is_pinned: !m.is_pinned } : m
+                  m.id === parseInt(id) ? { ...m, is_pinned: !m.is_pinned } : m
                 ))
               }
             }}
@@ -439,7 +443,7 @@ export default function DashboardPage() {
             darkMode={darkMode}
             onRestore={restoreMessage}
             onPermanentDelete={permanentDeleteMessage}
-            onMarkAsRead={markAsRead}
+            onMarkAsRead={markArchivedAsRead}
           />
         )
       case 'qa':
@@ -452,7 +456,12 @@ export default function DashboardPage() {
             settingsForm={settings}
             darkMode={darkMode}
             onSettingsChange={(field: string, value: any) => setSettings({ ...settings, [field]: value })}
-            onSocialLinkChange={(platform: string, value: string) => setSettings({ ...settings, socialLinks: { ...settings.socialLinks, [platform]: value } })}
+            onSocialLinkChange={(platform: string, value: string) => {
+              setSettings({ 
+                ...settings, 
+                socialLinks: { ...settings.socialLinks, [platform]: value } 
+              })
+            }}
             onImageUpload={handleImageUpload}
             onImageRemove={handleImageRemove}
             onSave={saveSettings}
