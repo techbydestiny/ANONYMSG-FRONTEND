@@ -1,104 +1,14 @@
-// frontend/app/verify-email/page.tsx
-'use client'
-
-import { useState, useEffect } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
-import { API_BASE_URL } from '@/lib/api'
+import { Suspense } from 'react'
+import VerifyEmailClient from './VerifyEmailClient'
 
 export default function VerifyEmailPage() {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
-  const [message, setMessage] = useState('')
-
-  useEffect(() => {
-    const token = searchParams.get('token')
-    const email = searchParams.get('email')
-
-    if (!token || !email) {
-      setStatus('error')
-      setMessage('Invalid verification link')
-      return
-    }
-
-    const verifyEmail = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/auth/verify-email/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token, email })
-        })
-
-        const data = await response.json()
-
-        if (response.ok) {
-          setStatus('success')
-          setMessage(data.message || 'Email verified successfully!')
-          setTimeout(() => router.push('/login'), 3000)
-        } else {
-          setStatus('error')
-          setMessage(data.error || 'Verification failed')
-        }
-      } catch (error) {
-        setStatus('error')
-        setMessage('Network error. Please try again.')
-      }
-    }
-
-    verifyEmail()
-  }, [searchParams, router])
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black">
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-600/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl animate-pulse-slow" />
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
       </div>
-
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-8 max-w-md w-full text-center">
-        {status === 'loading' && (
-          <>
-            <Loader2 size={48} className="animate-spin text-blue-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-white mb-2">Verifying...</h2>
-            <p className="text-gray-400">Please wait while we verify your email.</p>
-          </>
-        )}
-        
-        {status === 'success' && (
-          <>
-            <CheckCircle size={48} className="text-green-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-white mb-2">Email Verified!</h2>
-            <p className="text-gray-400 mb-6">{message}</p>
-            <Link href="/login">
-              <button className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-white transition">
-                Go to Login
-              </button>
-            </Link>
-          </>
-        )}
-        
-        {status === 'error' && (
-          <>
-            <XCircle size={48} className="text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-white mb-2">Verification Failed</h2>
-            <p className="text-gray-400 mb-6">{message}</p>
-            <div className="space-y-3">
-              <Link href="/login">
-                <button className="w-full px-6 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-white transition">
-                  Back to Login
-                </button>
-              </Link>
-              <Link href="/forgot-password">
-                <button className="w-full px-6 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl text-white transition">
-                  Forgot Password?
-                </button>
-              </Link>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+    }>
+      <VerifyEmailClient />
+    </Suspense>
   )
 }
